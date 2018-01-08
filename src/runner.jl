@@ -24,26 +24,30 @@ end
 
 function make_runner_file(testfilename, logfilename)
     fn, fh = mktemp()
-    #atexit(()->rm(fn, force=true))
+    atexit(()->rm(fn, force=true))
     println(fh, runner_code(testfilename, logfilename))
     close(fh)
     fn
 end
 
 ##
-import Base.Pkg: splitjl
-function test(pkgs::AbstractString...; coverage::Bool=false)
-    logfilepath = pwd()
-    Base.Pkg.cd(test, AbstractString[splitjl.(pkgs)...]; coverage=coverage, logfilepath = logfilepath)
+import Base.Pkg: splitjl, Reqs
+import Base.Pkg.Entry: resolve
+function test(pkgs::AbstractString...; coverage::Bool=false, logfilepath=pwd())
+    Base.Pkg.cd(test,
+                AbstractString[splitjl.(pkgs)...];
+                coverage=coverage,
+                logfilepath = logfilepath)
 end
 
 
-
-####
 function test!(pkg::AbstractString,
                errs::Vector{AbstractString},
                nopkgs::Vector{AbstractString},
-               notests::Vector{AbstractString}; coverage::Bool=false, logfilepath=pwd())
+               notests::Vector{AbstractString};
+               coverage::Bool=false,
+               logfilepath=pwd())
+
     reqs_path = abspath(pkg,"test","REQUIRE")
     if isfile(reqs_path)
         tests_require = Reqs.parse(reqs_path)
