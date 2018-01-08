@@ -17,8 +17,9 @@ function runner_code(testfilename, logfilename)
         include("$testfilename")
     end
     open("$(logfilename)","w") do fh
-        println(fh, ts)
+        print(fh, report(ts))
     end
+    exit(any_problems(ts))
     """
 end
 
