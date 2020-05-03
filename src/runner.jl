@@ -21,6 +21,9 @@ function make_runner_file(testfilename, logfilename)
 end
 
 ##
+import Pkg: PackageSpec
+import Pkg.Types: Context, ensure_resolved, is_project_uuid
+import Pkg.Operations: project_resolve!, project_deps_resolve!, manifest_resolve!, update_package_test!, manifest_info, source_path
 
 test(pkgs::AbstractString...; kwargs...) = test(AbstractString[i for i in pkgs]; kwargs...)
 
@@ -31,30 +34,39 @@ function test!(pkg::AbstractString,
                coverage::Bool=false,
                logfilepath=pwd())
 
-    reqs_path = abspath(pkg,"test","REQUIRE")
-    if isfile(reqs_path)
-        tests_require = Reqs.parse(reqs_path)
-        if (!isempty(tests_require))
-            @info "Computing test dependencies for $pkg..."
-            resolve(merge(Reqs.parse("REQUIRE"), tests_require))
-        end
-    end
-    test_path = abspath(pkg,"test","runtests.jl")
-    if !isdir(pkg)
-        push!(nopkgs, pkg)
-    elseif !isfile(test_path)
+   # Copied from Pkg.test approach. Needs tidying up.
+   pkgspec = deepcopy(PackageSpec(pkg))
+   ctx = Context()
+   project_resolve!(ctx, [pkgspec])
+   project_deps_resolve!(ctx, [pkgspec])
+   manifest_resolve!(ctx, [pkgspec])
+   try
+       ensure_resolved(ctx, [pkgspec])
+   catch
+       push!(nopkgs, pkgspec.name)
+       return
+   end
+
+   if is_project_uuid(ctx, pkgspec.uuid)
+       pkgspec.path = dirname(ctx.env.project_file)
+       pkgspec.version = ctx.env.pkgspec.version
+   else
+       update_package_test!(pkgspec, manifest_info(ctx, pkgspec.uuid))
+   end
+   testfilepath = joinpath(source_path(ctx, pkgspec), "test", "runtests.jl")
+
+    if !isfile(testfilepath)
         push!(notests, pkg)
     else
         @info "Testing $pkg"
         logfilename = joinpath(logfilepath, "testlog.xml") # TODO handle having multiple packages called on after the other
-        runner_file_path = make_runner_file(test_path, logfilename)
-        cd(dirname(test_path)) do
+        runner_file_path = make_runner_file(testfilepath, logfilename)
+        cd(dirname(testfilepath)) do
             try
                 cmd = ```
                     $(Base.julia_cmd())
                     --code-coverage=$(coverage ? "user" : "none")
                     --color=$(Base.have_color ? "yes" : "no")
-                    --compilecache=$(Bool(Base.JLOptions().use_compilecache) ? "yes" : "no")
                     --check-bounds=yes
                     --startup-file=$(Base.JLOptions().startupfile != 2 ? "yes" : "no")
                     $(runner_file_path)
@@ -62,12 +74,14 @@ function test!(pkg::AbstractString,
                 run(cmd)
                 @info "$pkg tests passed"
             catch err
-                Base.Pkg.Entry.warnbanner(err, label="[ ERROR: \$pkg ]")
+                @warn """
+                [ ERROR: $pkg ]
+                $err
+                """
                 push!(errs,pkg)
             end
         end
     end
-    isfile(reqs_path) && resolve()
 end
 
 struct PkgTestError <: Exception
@@ -98,7 +112,7 @@ function test(pkgs::Vector{AbstractString}; coverage::Bool=false, logfilepath = 
         if !isempty(notests)
             push!(messages, "$(join(notests,", "," and ")) did not provide a test/runtests.jl file")
         end
-        throw(PkgTestError(join(messages, "and")))
+        throw(PkgTestError(join(messages, " and ")))
     end
 end
 
