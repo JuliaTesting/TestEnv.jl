@@ -1,17 +1,6 @@
-
-# Julia 0.6 compat
-# Todo move this to its own place and do this properly
-macro info(x)
-    :(info($x)) |> esc
-end
-
-
-##########
-
-
 function runner_code(testfilename, logfilename)
     """
-    using Base.Test
+    using Test
     using TestReports
     ts = @testset ReportingTestSet "" begin
         include("$testfilename")
@@ -32,15 +21,8 @@ function make_runner_file(testfilename, logfilename)
 end
 
 ##
-import Base.Pkg: splitjl, Reqs
-import Base.Pkg.Entry: resolve
-function test(pkgs::AbstractString...; coverage::Bool=false, logfilepath=pwd())
-    Base.Pkg.cd(test,
-                AbstractString[splitjl.(pkgs)...];
-                coverage=coverage,
-                logfilepath = logfilepath)
-end
 
+test(pkgs::AbstractString...; kwargs...) = test(AbstractString[i for i in pkgs]; kwargs...)
 
 function test!(pkg::AbstractString,
                errs::Vector{AbstractString},
