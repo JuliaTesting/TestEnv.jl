@@ -93,7 +93,7 @@ struct PkgTestError <: Exception
 end
 
 function Base.showerror(io::IO, ex::PkgTestError, bt; backtrace=true)
-    print_with_color(Base.error_color(), io, ex.msg)
+    printstyled(io, ex.msg, color=Base.error_color())
 end
 
 function test(pkgs::Vector{AbstractString}; coverage::Bool=false, logfilepath = pwd())
