@@ -78,10 +78,7 @@ function test!(pkg::AbstractString,
                 run(cmd)
                 @info "$pkg tests passed"
             catch err
-                @warn """
-                [ ERROR: $pkg ]
-                $err
-                """
+                @warn "ERROR: Test(s) failed or had an error in $pkg"
                 push!(errs,pkg)
             end
         end
