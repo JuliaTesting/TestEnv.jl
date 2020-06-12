@@ -21,9 +21,108 @@ function make_runner_file(testfilename, logfilename)
 end
 
 ##
-import Pkg: PackageSpec
-import Pkg.Types: Context, ensure_resolved, is_project_uuid
-import Pkg.Operations: project_resolve!, project_deps_resolve!, manifest_resolve!, update_package_test!, manifest_info, source_path
+import Pkg: PackageSpec, Types
+import Pkg.Types: Context, EnvCache, ensure_resolved, is_project_uuid
+import Pkg.Operations: project_resolve!, project_deps_resolve!, manifest_resolve!, manifest_info, project_rel_path
+
+@static if VERSION >= v"1.2.0"
+    import Pkg.Operations: update_package_test!, source_path  # not available in V1.0
+else
+    import Pkg.Operations: find_installed
+    import Pkg.Types: SHA1
+end
+
+"""
+    checkinstalled!(ctx::Union{Context, EnvCache}, pkgspec::Types.PackageSpec)
+
+Checks if the package is installed.
+
+For Julia versions V1.3 and later, the first arguments of the Pkg functions used
+is of type `Pkg.Types.Context`. For earlier versions, they are of type
+`Pkg.Types.EnvCache`.
+"""
+function checkinstalled!(ctx::Union{Context, EnvCache}, pkgspec::Types.PackageSpec)
+    project_resolve!(ctx, [pkgspec])
+    project_deps_resolve!(ctx, [pkgspec])
+    manifest_resolve!(ctx, [pkgspec])
+    try
+        ensure_resolved(ctx, [pkgspec])
+    catch
+        return false
+    end
+    return true
+end
+
+"""
+    gettestfilepath_pre_v1_2(ctx::Context, pkgspec::Types.PackageSpec)
+
+Gets the test file path for Julia versions before v1.2.0. Needs to be different
+due to differences within Pkg.
+"""
+function gettestfilepath_pre_v1_2(ctx::Context, pkgspec::Types.PackageSpec)
+    if is_project_uuid(ctx.env, pkgspec.uuid)
+        pkgspec.version = ctx.env.pkg.version
+        version_path = dirname(ctx.env.project_file)
+    else
+        @static if VERSION >= v"1.1.0"
+            entry = manifest_info(ctx.env, pkg.uuid)
+            if entry.repo.tree_sha !== nothing
+                version_path = find_installed(pkgspec.name, pkgspec.uuid, entry.repo.tree_sha)
+            elseif entry.path !== nothing
+                version_path =  project_rel_path(ctx, entry.path)
+            elseif pkg.uuid in keys(ctx.stdlibs)
+                version_path = Types.stdlib_path(pkgspec.name)
+            else
+                PkgTestError("Could not find either `git-tree-sha1` or `path` for package $(pkg.name)")
+            end
+        else
+            info = manifest_info(ctx.env, pkgspec.uuid)
+            if haskey(info, "git-tree-sha1")  # Doesn't work with 1.2, 1.3
+                version_path = find_installed(pkgspec.name, pkgspec.uuid, SHA1(info["git-tree-sha1"]))
+            elseif haskey(info, "path")  # Doesn't work with 1.2, 1.3
+                version_path =  project_rel_path(ctx, info["path"])
+            elseif pkg.uuid in keys(ctx.stdlibs)
+                version_path = Types.stdlib_path(pkgspec.name)
+            else
+                PkgTestError("Could not find either `git-tree-sha1` or `path` for package $(pkg.name)")
+            end
+        end
+    end
+    testfilepath = joinpath(version_path, "test", "runtests.jl")
+    return testfilepath
+end
+
+"""
+    gettestfilepath_v1_2(ctx::Context, pkgspec::Types.PackageSpec)
+
+Gets the test file path for Julia versions V1.2.0 and V1.3.1.
+"""
+function gettestfilepath_v1_2(ctx::Context, pkgspec::Types.PackageSpec)
+    if is_project_uuid(ctx.env, pkgspec.uuid)
+        pkgspec.path = dirname(ctx.env.project_file)
+        pkgspec.version = ctx.env.pkgspec.version
+    else
+        update_package_test!(pkgspec, manifest_info(ctx.env, pkgspec.uuid))
+    end
+    testfilepath = joinpath(project_rel_path(ctx, source_path(pkgspec)), "test", "runtests.jl")
+    return testfilepath
+end
+
+"""
+    gettestfilepath(ctx::Context, pkgspec::Types.PackageSpec)
+
+Gets the test file path for Julia versions V1.4.0 and later.
+"""
+function gettestfilepath(ctx::Context, pkgspec::Types.PackageSpec)
+    if is_project_uuid(ctx, pkgspec.uuid)
+        pkgspec.path = dirname(ctx.env.project_file)
+        pkgspec.version = ctx.env.pkgspec.version
+    else
+        update_package_test!(pkgspec, manifest_info(ctx, pkgspec.uuid))
+    end
+    testfilepath = joinpath(source_path(ctx, pkgspec), "test", "runtests.jl")
+    return testfilepath
+end
 
 test(pkgs::AbstractString...; kwargs...) = test(AbstractString[i for i in pkgs]; kwargs...)
 
@@ -34,26 +133,28 @@ function test!(pkg::AbstractString,
                coverage::Bool=false,
                logfilepath=pwd())
 
-   # Copied from Pkg.test approach. Needs tidying up.
+   # Copied from Pkg.test approach
    pkgspec = deepcopy(PackageSpec(pkg))
    ctx = Context()
-   project_resolve!(ctx, [pkgspec])
-   project_deps_resolve!(ctx, [pkgspec])
-   manifest_resolve!(ctx, [pkgspec])
-   try
-       ensure_resolved(ctx, [pkgspec])
-   catch
-       push!(nopkgs, pkgspec.name)
-       return
-   end
+    @static if VERSION >= v"1.4.0"
+       if !checkinstalled!(ctx, pkgspec)
+           push!(nopkgs, pkgspec.name)
+           return
+       end
+    else
+       if !checkinstalled!(ctx.env, pkgspec)
+           push!(nopkgs, pkgspec.name)
+           return
+       end
+    end
 
-   if is_project_uuid(ctx, pkgspec.uuid)
-       pkgspec.path = dirname(ctx.env.project_file)
-       pkgspec.version = ctx.env.pkgspec.version
-   else
-       update_package_test!(pkgspec, manifest_info(ctx, pkgspec.uuid))
-   end
-   testfilepath = joinpath(source_path(ctx, pkgspec), "test", "runtests.jl")
+    @static if VERSION >= v"1.4.0"
+        testfilepath = gettestfilepath(ctx, pkgspec)
+    elseif VERSION >= v"1.2.0"
+        testfilepath = gettestfilepath_v1_2(ctx, pkgspec)
+    else
+        testfilepath = gettestfilepath_pre_v1_2(ctx, pkgspec)
+    end
 
     if !isfile(testfilepath)
         push!(notests, pkg)
