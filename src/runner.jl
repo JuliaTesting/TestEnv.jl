@@ -1,5 +1,6 @@
 function runner_code(testfilename, logfilename)
     """
+    @info "Entered runner"
     using Test
     using TestReports
     @info "Testing with $testfilename"
@@ -161,9 +162,13 @@ function test!(pkg::AbstractString,
     else
         @info "Testing $pkg"
         logfilename = joinpath(logfilepath, "testlog.xml") # TODO handle having multiple packages called on after the other
+        @info "Will log results to $logfilename"
+        @info "Test file path is $testfilepath"
         runner_file_path = make_runner_file(testfilepath, logfilename)
+        @info "Runner file made"
         cd(dirname(testfilepath)) do
             try
+                @info "Got to directory of test file"
                 cmd = ```
                     $(Base.julia_cmd())
                     --code-coverage=$(coverage ? "user" : "none")
