@@ -2,12 +2,12 @@ function runner_code(testfilename, logfilename)
     """
     using Test
     using TestReports
+    @info "Testing with $testfilename"
     ts = @testset ReportingTestSet "" begin
         include("$testfilename")
     end
-    open("$(logfilename)","w") do fh
-        print(fh, report(ts))
-    end
+    @info "Writing report to $(logfilename)"
+    write("$(logfilename)", report(ts))
     exit(any_problems(ts))
     """
 end
