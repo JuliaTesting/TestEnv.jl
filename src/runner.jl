@@ -1,13 +1,12 @@
 function runner_code(testfilename, logfilename)
     """
-    @info "Entered runner"
     using Test
     using TestReports
-    @info "Starting test"
+
     ts = @testset ReportingTestSet "" begin
         include($(repr(testfilename)))
     end
-    @info "Writing report"
+
     write($(repr(logfilename)), report(ts))
     exit(any_problems(ts))
     """
@@ -162,13 +161,9 @@ function test!(pkg::AbstractString,
     else
         @info "Testing $pkg"
         logfilename = joinpath(logfilepath, "testlog.xml") # TODO handle having multiple packages called on after the other
-        @info "Will log results to $logfilename"
-        @info "Test file path is $testfilepath"
         runner_file_path = make_runner_file(testfilepath, logfilename)
-        @info "Runner file made"
         cd(dirname(testfilepath)) do
             try
-                @info "Got to directory of test file"
                 cmd = ```
                     $(Base.julia_cmd())
                     --code-coverage=$(coverage ? "user" : "none")
@@ -182,7 +177,7 @@ function test!(pkg::AbstractString,
                     $(runner_file_path)
                     ```
                 run(cmd)
-                @info "$pkg tests passed"
+                @info "$pkg tests passed. Results saved to $logfilename."
             catch err
                 @warn "ERROR: Test(s) failed or had an error in $pkg"
                 push!(errs,pkg)
