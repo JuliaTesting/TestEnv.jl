@@ -26,7 +26,7 @@ import Pkg.Types: Context, EnvCache, ensure_resolved, is_project_uuid
 import Pkg.Operations: project_resolve!, project_deps_resolve!, manifest_resolve!, manifest_info, project_rel_path
 
 @static if VERSION >= v"1.2.0"
-    import Pkg.Operations: update_package_test!, source_path  # not available in V1.0
+    import Pkg.Operations: update_package_test!, source_path  # not available in V1.0.5
 else
     import Pkg.Operations: find_installed
     import Pkg.Types: SHA1
@@ -124,6 +124,7 @@ function gettestfilepath(ctx::Context, pkgspec::Types.PackageSpec)
     return testfilepath
 end
 
+test(;coverage::Bool=false, logfilepath=pwd()) = test(sort!(AbstractString[keys(installed())...]); coverage=coverage, logfilepath=logfilepath)
 test(pkgs::AbstractString...; kwargs...) = test(AbstractString[i for i in pkgs]; kwargs...)
 
 function test!(pkg::AbstractString,
@@ -133,9 +134,9 @@ function test!(pkg::AbstractString,
                coverage::Bool=false,
                logfilepath=pwd())
 
-   # Copied from Pkg.test approach
-   pkgspec = deepcopy(PackageSpec(pkg))
-   ctx = Context()
+    # Copied from Pkg.test approach
+    pkgspec = deepcopy(PackageSpec(pkg))
+    ctx = Context()
     @static if VERSION >= v"1.4.0"
        if !checkinstalled!(ctx, pkgspec)
            push!(nopkgs, pkgspec.name)
@@ -217,5 +218,3 @@ function test(pkgs::Vector{AbstractString}; coverage::Bool=false, logfilepath = 
         throw(PkgTestError(join(messages, " and ")))
     end
 end
-
-test(;coverage::Bool=false, logfilepath=pwd()) = test(sort!(AbstractString[keys(installed())...]); coverage=coverage, logfilepath=logfilepath)
