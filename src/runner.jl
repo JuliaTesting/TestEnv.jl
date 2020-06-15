@@ -3,12 +3,12 @@ function runner_code(testfilename, logfilename)
     @info "Entered runner"
     using Test
     using TestReports
-    @info "Testing with $testfilename"
+    @info "Starting test"
     ts = @testset ReportingTestSet "" begin
-        include("$testfilename")
+        include($(repr(testfilename)))
     end
-    @info "Writing report to $(logfilename)"
-    write("$(logfilename)", report(ts))
+    @info "Writing report"
+    write($(repr(logfilename)), report(ts))
     exit(any_problems(ts))
     """
 end
