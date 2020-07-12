@@ -1,5 +1,9 @@
-function runner_code(testfilename, logfilename)
+function gen_runner_code(testfilename, logfilename, testreportsdir)
     """
+    $(Base.load_path_setup_code(false))
+
+    pushfirst!(Base.LOAD_PATH, $(repr(testreportsdir)))
+
     using Test
     using TestReports
 
@@ -14,21 +18,19 @@ function runner_code(testfilename, logfilename)
     """
 end
 
-function make_runner_file(testfilename, logfilename)
-    fn, fh = mktemp()
-    atexit(()->rm(fn, force=true))
-    println(fh, runner_code(testfilename, logfilename))
-    close(fh)
-    fn
-end
-
 ##
+using Pkg
 import Pkg: PackageSpec, Types
 import Pkg.Types: Context, EnvCache, ensure_resolved, is_project_uuid
 import Pkg.Operations: project_resolve!, project_deps_resolve!, manifest_resolve!, manifest_info, project_rel_path
 
+@static if VERSION >= v"1.4.0"
+    import Pkg.Operations: gen_target_project
+else
+    import Pkg.Operations: with_dependencies_loadable_at_toplevel
+end
 @static if VERSION >= v"1.2.0"
-    import Pkg.Operations: update_package_test!, source_path  # not available in V1.0.5
+    import Pkg.Operations: update_package_test!, source_path, sandbox  # not available in V1.0.5
 else
     import Pkg.Operations: find_installed
     import Pkg.Types: SHA1
@@ -62,6 +64,7 @@ Gets the test file path for Julia versions before v1.2.0. Needs to be different
 due to differences within Pkg.
 """
 function gettestfilepath_pre_v1_2(ctx::Context, pkgspec::Types.PackageSpec)
+    pkgspec.special_action = Pkg.Types.PKGSPEC_TESTED
     if is_project_uuid(ctx.env, pkgspec.uuid)
         pkgspec.version = ctx.env.pkg.version
         version_path = dirname(ctx.env.project_file)
@@ -100,11 +103,13 @@ end
 Gets the test file path for Julia versions V1.2.0 and V1.3.1.
 """
 function gettestfilepath_v1_2(ctx::Context, pkgspec::Types.PackageSpec)
+    pkgspec.special_action = Pkg.Types.PKGSPEC_TESTED
     if is_project_uuid(ctx.env, pkgspec.uuid)
         pkgspec.path = dirname(ctx.env.project_file)
         pkgspec.version = ctx.env.pkg.version
     else
         update_package_test!(pkgspec, manifest_info(ctx.env, pkgspec.uuid))
+        pkgspec.path = joinpath(project_rel_path(ctx, source_path(pkgspec)))
     end
     testfilepath = joinpath(project_rel_path(ctx, source_path(pkgspec)), "test", "runtests.jl")
     return testfilepath
@@ -121,6 +126,7 @@ function gettestfilepath(ctx::Context, pkgspec::Types.PackageSpec)
         pkgspec.version = ctx.env.pkg.version
     else
         update_package_test!(pkgspec, manifest_info(ctx, pkgspec.uuid))
+        pkgspec.path = project_rel_path(ctx, source_path(ctx, pkgspec))
     end
     testfilepath = joinpath(source_path(ctx, pkgspec), "test", "runtests.jl")
     return testfilepath
@@ -156,6 +162,8 @@ function test!(pkg::AbstractString,
        end
     end
 
+    Pkg.instantiate(ctx)
+
     @static if VERSION >= v"1.4.0"
         testfilepath = gettestfilepath(ctx, pkgspec)
     elseif VERSION >= v"1.2.0"
@@ -167,28 +175,61 @@ function test!(pkg::AbstractString,
     if !isfile(testfilepath)
         push!(notests, pkg)
     else
-        @info "Testing $pkg"
         logfilename = joinpath(logfilepath, "testlog.xml") # TODO handle having multiple packages called on after the other
-        runner_file_path = make_runner_file(testfilepath, logfilename)
-        cd(dirname(testfilepath)) do
-            try
-                cmd = ```
-                    $(Base.julia_cmd())
-                    --code-coverage=$(coverage ? "user" : "none")
-                    --color=$(Base.have_color ? "yes" : "no")
-                    --compiled-modules=$(Bool(Base.JLOptions().use_compiled_modules) ? "yes" : "no")
-                    --check-bounds=yes
-                    --depwarn=$(Base.JLOptions().depwarn == 2 ? "error" : "yes")
-                    --inline=$(Bool(Base.JLOptions().can_inline) ? "yes" : "no")
-                    --startup-file=$(Base.JLOptions().startupfile != 2 ? "yes" : "no")
-                    --track-allocation=$(("none", "user", "all")[Base.JLOptions().malloc_log + 1])
-                    $(runner_file_path)
-                    ```
-                run(cmd)
-                @info "$pkg tests passed. Results saved to $logfilename."
-            catch err
-                @warn "ERROR: Test(s) failed or had an error in $pkg"
-                push!(errs,pkg)
+        testreportsdir = dirname(@__DIR__)
+        runner_code = gen_runner_code(testfilepath, logfilename, testreportsdir)
+        cmd = ```
+            $(Base.julia_cmd())
+            --code-coverage=$(coverage ? "user" : "none")
+            --color=$(Base.have_color ? "yes" : "no")
+            --compiled-modules=$(Bool(Base.JLOptions().use_compiled_modules) ? "yes" : "no")
+            --check-bounds=yes
+            --depwarn=$(Base.JLOptions().depwarn == 2 ? "error" : "yes")
+            --inline=$(Bool(Base.JLOptions().can_inline) ? "yes" : "no")
+            --startup-file=$(Base.JLOptions().startupfile != 2 ? "yes" : "no")
+            --track-allocation=$(("none", "user", "all")[Base.JLOptions().malloc_log + 1])
+            --eval $(runner_code)
+            ```
+
+        test_folder_has_project_file = isfile(replace(testfilepath, r"/runtests.jl$"=>"/Project.toml"))
+
+        if VERSION >= v"1.4.0" || (VERSION >= v"1.2.0" && test_folder_has_project_file)
+            # Operations.sandbox() has different arguments between versions
+            sandbox_args = (ctx,
+                            pkgspec,
+                            pkgspec.path,
+                            joinpath(pkgspec.path, "test"))
+            if VERSION >= v"1.4.0"
+                test_project_override = test_folder_has_project_file ?
+                    nothing :
+                    gen_target_project(ctx, pkgspec, pkgspec.path, "test")
+                sandbox_args = (sandbox_args..., test_project_override)
+            end
+
+            sandbox(sandbox_args...) do
+                # test_fn !== nothing && test_fn()  # TODO: implement
+                flush(stdout)
+                try
+                    @info "Testing $pkg"
+                    run(cmd)
+                    @info "$pkg tests passed. Results saved to $logfilename."
+                catch err
+                    @warn "ERROR: Test(s) failed or had an error in $pkg"
+                    push!(errs, pkg)
+                end
+            end
+        else
+            with_dependencies_loadable_at_toplevel(ctx, pkgspec; might_need_to_resolve=true) do localctx
+                try
+                    @info "Testing $pkg"
+                    Pkg.activate(localctx.env.project_file)
+                    run(cmd)
+                    Pkg.activate(ctx.env.project_file)
+                    @info "$pkg tests passed. Results saved to $logfilename."
+                catch err
+                    @warn "ERROR: Test(s) failed or had an error in $pkg"
+                    push!(errs, pkg)
+                end
             end
         end
     end
