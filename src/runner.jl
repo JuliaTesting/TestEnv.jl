@@ -100,7 +100,7 @@ Gets the test file path for Julia versions V1.2.0 and V1.3.1.
 function gettestfilepath_v1_2(ctx::Context, pkgspec::Types.PackageSpec)
     if is_project_uuid(ctx.env, pkgspec.uuid)
         pkgspec.path = dirname(ctx.env.project_file)
-        pkgspec.version = ctx.env.pkgspec.version
+        pkgspec.version = ctx.env.pkg.version
     else
         update_package_test!(pkgspec, manifest_info(ctx.env, pkgspec.uuid))
     end
@@ -116,7 +116,7 @@ Gets the test file path for Julia versions V1.4.0 and later.
 function gettestfilepath(ctx::Context, pkgspec::Types.PackageSpec)
     if is_project_uuid(ctx, pkgspec.uuid)
         pkgspec.path = dirname(ctx.env.project_file)
-        pkgspec.version = ctx.env.pkgspec.version
+        pkgspec.version = ctx.env.pkg.version
     else
         update_package_test!(pkgspec, manifest_info(ctx, pkgspec.uuid))
     end
