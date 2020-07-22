@@ -7,6 +7,8 @@ function runner_code(testfilename, logfilename)
         include($(repr(testfilename)))
     end
 
+    display_reporting_testset(ts)
+    
     write($(repr(logfilename)), report(ts))
     exit(any_problems(ts))
     """
