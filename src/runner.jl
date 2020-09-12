@@ -16,8 +16,6 @@ function gen_runner_code(testfilename, logfilename, testreportsdir, test_args)
         include($(repr(testfilename)))
     end
 
-    display_reporting_testset(ts)
-
     write($(repr(logfilename)), report(ts))
     any_problems(ts) && exit(TestReports.TESTS_FAILED)
     """
