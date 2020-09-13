@@ -41,9 +41,11 @@ end
 """
     checkinstalled!(ctx::Union{Context, EnvCache}, pkgspec::Types.PackageSpec)
 
-Checks if the package is installed.
+Checks if the package is installed by using `ensure_resolved` from `Pkg/src/Types.jl`.
+This function fails if the package is not installed, but here we wrap it in a
+try-catch as we may want to test another package after the one that isn't installed.
 
-For Julia versions V1.3 and later, the first arguments of the Pkg functions used
+For Julia versions V1.4 and later, the first arguments of the Pkg functions used
 is of type `Pkg.Types.Context`. For earlier versions, they are of type
 `Pkg.Types.EnvCache`.
 """
@@ -62,7 +64,7 @@ end
 """
     gettestfilepath(ctx::Context, pkgspec::Types.PackageSpec)
 
-Gets the test file path. Code for each Julia version mirrors that found 
+Gets the testfile path of the package. Code for each Julia version mirrors that found 
 in `Pkg\\src\\Operations.jl`.
 """
 function gettestfilepath(ctx::Context, pkgspec::Types.PackageSpec)
@@ -131,7 +133,7 @@ end
 
 **Keyword arguments:**
   - `coverage::Bool=false`: enable or disable generation of coverage statistics.
-  - `julia_args::Union{Cmd, Vector{String}}`: options to be passed the test process.
+  - `julia_args::Union{Cmd, Vector{String}}`: options to be passed to the test process.
   - `test_args::Union{Cmd, Vector{String}}`: test arguments (`ARGS`) available in the test process.
   - `logfilepath::AbstractString=pwd()`: file path where test reports are saved.
   - `logfilename::Union{AbstractString, Vector{AbstractString}}`: name(s) of test report file(s).
@@ -146,8 +148,6 @@ package name, for example `Example_testlog.xml`.
 If `logfilename` is supplied, it must match the type (and length, if a vector) of `pkg`.
 
 The tests are run in the same way as `Pkg.test`.
-
-See also: [`Pkg.test`](@ref)
 """
 function test(; kwargs...)
     ctx = Context()
