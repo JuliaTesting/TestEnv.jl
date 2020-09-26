@@ -195,7 +195,7 @@ function test!(pkg::AbstractString,
         cmd = ```
             $(Base.julia_cmd())
             --code-coverage=$(coverage ? "user" : "none")
-            --color=$(Base.have_color ? "yes" : "no")
+            --color=$(Base.have_color === nothing ? "auto" : Base.have_color ? "yes" : "no")
             --compiled-modules=$(Bool(Base.JLOptions().use_compiled_modules) ? "yes" : "no")
             --check-bounds=yes
             --depwarn=$(Base.JLOptions().depwarn == 2 ? "error" : "yes")
