@@ -1,3 +1,6 @@
+"Exit code for runner when unit tests fail"
+const TESTS_FAILED = 3
+
 function gen_runner_code(testfilename, logfilename, testreportsdir, test_args)
     """
     $(Base.load_path_setup_code(false))
@@ -16,7 +19,7 @@ function gen_runner_code(testfilename, logfilename, testreportsdir, test_args)
     display_reporting_testset(ts)
 
     write($(repr(logfilename)), report(ts))
-    exit(any_problems(ts))
+    any_problems(ts) && exit(TestReports.TESTS_FAILED)
     """
 end
 
@@ -223,26 +226,32 @@ function test!(pkg::AbstractString,
 
             sandbox(sandbox_args...) do
                 flush(stdout)
-                try
-                    @info "Testing $pkg"
-                    run(cmd)
+                @info "Testing $pkg"
+                proc = open(cmd, Base.stdout; write=true)
+                wait(proc)
+                if proc.exitcode == 0
                     @info "$pkg tests passed. Results saved to $logfilename."
-                catch err
+                elseif proc.exitcode == TESTS_FAILED
                     @warn "ERROR: Test(s) failed or had an error in $pkg"
                     push!(errs, pkg)
+                else
+                    throw(PkgTestError("TestReports failed to generate the report.\nSee error log above."))
                 end
             end
         else
             with_dependencies_loadable_at_toplevel(ctx, pkgspec; might_need_to_resolve=true) do localctx
-                try
-                    @info "Testing $pkg"
-                    Pkg.activate(localctx.env.project_file)
-                    run(cmd)
-                    Pkg.activate(ctx.env.project_file)
+                @info "Testing $pkg"
+                Pkg.activate(localctx.env.project_file)
+                proc = open(cmd, Base.stdout; write=true)
+                wait(proc)
+                Pkg.activate(ctx.env.project_file)
+                if proc.exitcode == 0
                     @info "$pkg tests passed. Results saved to $logfilename."
-                catch err
+                elseif proc.exitcode == TESTS_FAILED
                     @warn "ERROR: Test(s) failed or had an error in $pkg"
                     push!(errs, pkg)
+                else
+                    throw(PkgTestError("TestReports failed to generate the report.\nSee error log above."))
                 end
             end
         end
