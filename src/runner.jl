@@ -1,46 +1,79 @@
-"Exit code for runner when unit tests fail"
-const TESTS_FAILED = 3
-
-function gen_runner_code(testfilename, logfilename, testreportsdir, test_args)
-    """
-    $(Base.load_path_setup_code(false))
-
-    pushfirst!(Base.LOAD_PATH, $(repr(testreportsdir)))
-
-    using Test
-    using TestReports
-
-    append!(empty!(ARGS), $(repr(test_args.exec)))
-
-    ts = @testset ReportingTestSet "" begin
-        include($(repr(testfilename)))
-    end
-
-    write($(repr(logfilename)), report(ts))
-    any_problems(ts) && exit(TestReports.TESTS_FAILED)
-    """
-end
-
-##
 using Pkg
 import Pkg: PackageSpec, Types
 import Pkg.Types: Context, EnvCache, ensure_resolved, is_project_uuid
 import Pkg.Operations: project_resolve!, project_deps_resolve!, manifest_resolve!, manifest_info, project_rel_path
 
+# Version specific imports
 @static if VERSION >= v"1.4.0"
     import Pkg.Operations: gen_target_project
 else
     import Pkg.Operations: with_dependencies_loadable_at_toplevel
 end
 @static if VERSION >= v"1.2.0"
-    import Pkg.Operations: update_package_test!, source_path, sandbox  # not available in V1.0.5
+    import Pkg.Operations: update_package_test!, source_path, sandbox
 else
     import Pkg.Operations: find_installed
     import Pkg.Types: SHA1
 end
 
+"Exit code for runner when tests fail"
+const TESTS_FAILED = 3
+
 """
-    checkinstalled!(ctx::Union{Context, EnvCache}, pkgspec::Types.PackageSpec)
+    gen_runner_code(testfilename, logfilename, test_args)
+
+Returns runner code that will run the tests and generate the report in a new
+Julia instance.
+"""
+function gen_runner_code(testfilename, logfilename, test_args)
+    testreportsdir = dirname(@__DIR__)
+
+    runner_code = """
+        $(Base.load_path_setup_code(false))
+
+        pushfirst!(Base.LOAD_PATH, $(repr(testreportsdir)))
+
+        using Test
+        using TestReports
+
+        append!(empty!(ARGS), $(repr(test_args.exec)))
+
+        ts = @testset ReportingTestSet "" begin
+            include($(repr(testfilename)))
+        end
+
+        write($(repr(logfilename)), report(ts))
+        any_problems(ts) && exit(TestReports.TESTS_FAILED)
+        """
+    return runner_code
+end
+
+"""
+    gen_command(runner_code, julia_args, coverage)
+
+Returns `Cmd` which will run the runner code in a new Julia instance.
+
+See also: [`gen_runner_code`](@ref)
+"""
+function gen_command(runner_code, julia_args, coverage)
+    cmd = ```
+        $(Base.julia_cmd())
+        --code-coverage=$(coverage ? "user" : "none")
+        --color=$(Base.have_color === nothing ? "auto" : Base.have_color ? "yes" : "no")
+        --compiled-modules=$(Bool(Base.JLOptions().use_compiled_modules) ? "yes" : "no")
+        --check-bounds=yes
+        --depwarn=$(Base.JLOptions().depwarn == 2 ? "error" : "yes")
+        --inline=$(Bool(Base.JLOptions().can_inline) ? "yes" : "no")
+        --startup-file=$(Base.JLOptions().startupfile != 2 ? "yes" : "no")
+        --track-allocation=$(("none", "user", "all")[Base.JLOptions().malloc_log + 1])
+        $(julia_args)
+        --eval $(runner_code)
+        ```
+    return cmd
+end
+
+"""
+    isinstalled!(ctx::Union{Context, EnvCache}, pkgspec::Types.PackageSpec)
 
 Checks if the package is installed by using `ensure_resolved` from `Pkg/src/Types.jl`.
 This function fails if the package is not installed, but here we wrap it in a
@@ -50,12 +83,17 @@ For Julia versions V1.4 and later, the first arguments of the Pkg functions used
 is of type `Pkg.Types.Context`. For earlier versions, they are of type
 `Pkg.Types.EnvCache`.
 """
-function checkinstalled!(ctx::Union{Context, EnvCache}, pkgspec::Types.PackageSpec)
-    project_resolve!(ctx, [pkgspec])
-    project_deps_resolve!(ctx, [pkgspec])
-    manifest_resolve!(ctx, [pkgspec])
+function isinstalled!(ctx::Context, pkgspec::Types.PackageSpec)
+    @static if VERSION >= v"1.4.0"
+        var = ctx
+    else
+        var = ctx.env
+    end
+    project_resolve!(var, [pkgspec])
+    project_deps_resolve!(var, [pkgspec])
+    manifest_resolve!(var, [pkgspec])
     try
-        ensure_resolved(ctx, [pkgspec])
+        ensure_resolved(var, [pkgspec])
     catch
         return false
     end
@@ -66,7 +104,7 @@ end
     gettestfilepath(ctx::Context, pkgspec::Types.PackageSpec)
 
 Gets the testfile path of the package. Code for each Julia version mirrors that found 
-in `Pkg\\src\\Operations.jl`.
+in `Pkg/src/Operations.jl`.
 """
 function gettestfilepath(ctx::Context, pkgspec::Types.PackageSpec)
     @static if VERSION >= v"1.4.0"
@@ -77,7 +115,7 @@ function gettestfilepath(ctx::Context, pkgspec::Types.PackageSpec)
             update_package_test!(pkgspec, manifest_info(ctx, pkgspec.uuid))
             pkgspec.path = project_rel_path(ctx, source_path(ctx, pkgspec))
         end
-        testfilepath = joinpath(source_path(ctx, pkgspec), "test", "runtests.jl")
+        pkgfilepath = source_path(ctx, pkgspec)
     elseif VERSION >= v"1.2.0"
         pkgspec.special_action = Pkg.Types.PKGSPEC_TESTED
         if is_project_uuid(ctx.env, pkgspec.uuid)
@@ -87,52 +125,159 @@ function gettestfilepath(ctx::Context, pkgspec::Types.PackageSpec)
             update_package_test!(pkgspec, manifest_info(ctx.env, pkgspec.uuid))
             pkgspec.path = joinpath(project_rel_path(ctx, source_path(pkgspec)))
         end
-        testfilepath = joinpath(project_rel_path(ctx, source_path(pkgspec)), "test", "runtests.jl")
+        pkgfilepath = project_rel_path(ctx, source_path(pkgspec))
     elseif VERSION >= v"1.1.0"
         pkgspec.special_action = Pkg.Types.PKGSPEC_TESTED
         if is_project_uuid(ctx.env, pkgspec.uuid)
             pkgspec.version = ctx.env.pkg.version
-            version_path = dirname(ctx.env.project_file)
+            pkgfilepath = dirname(ctx.env.project_file)
         else
             entry = manifest_info(ctx.env, pkg.uuid)
             if entry.repo.tree_sha !== nothing
-                version_path = find_installed(pkgspec.name, pkgspec.uuid, entry.repo.tree_sha)
+                pkgfilepath = find_installed(pkgspec.name, pkgspec.uuid, entry.repo.tree_sha)
             elseif entry.path !== nothing
-                version_path =  project_rel_path(ctx, entry.path)
+                pkgfilepath =  project_rel_path(ctx, entry.path)
             elseif pkgspec.uuid in keys(ctx.stdlibs)
-                version_path = Types.stdlib_path(pkgspec.name)
+                pkgfilepath = Types.stdlib_path(pkgspec.name)
             else
                 throw(PkgTestError("Could not find either `git-tree-sha1` or `path` for package $(pkgspec.name)"))
             end
         end
-        testfilepath = joinpath(version_path, "test", "runtests.jl")
     else
         pkgspec.special_action = Pkg.Types.PKGSPEC_TESTED
         if is_project_uuid(ctx.env, pkgspec.uuid)
             pkgspec.version = ctx.env.pkg.version
-            version_path = dirname(ctx.env.project_file)
+            pkgfilepath = dirname(ctx.env.project_file)
         else        
             info = manifest_info(ctx.env, pkgspec.uuid)
             if haskey(info, "git-tree-sha1")
-                version_path = find_installed(pkgspec.name, pkgspec.uuid, SHA1(info["git-tree-sha1"]))
+                pkgfilepath = find_installed(pkgspec.name, pkgspec.uuid, SHA1(info["git-tree-sha1"]))
             elseif haskey(info, "path")
-                version_path =  project_rel_path(ctx, info["path"])
+                pkgfilepath =  project_rel_path(ctx, info["path"])
             elseif pkgspec.uuid in keys(ctx.stdlibs)
-                version_path = Types.stdlib_path(pkgspec.name)
+                pkgfilepath = Types.stdlib_path(pkgspec.name)
             else
                 throw(PkgTestError("Could not find either `git-tree-sha1` or `path` for package $(pkgspec.name)"))
             end
         end
-        testfilepath = joinpath(version_path, "test", "runtests.jl")
     end
+    testfilepath = joinpath(pkgfilepath, "test", "runtests.jl")
     return testfilepath
+end
+
+"""
+    checkexitcode!(errs, proc, pkg, logfilename)
+
+Checks `proc.exitcode` and acts as follows:
+
+ - If 0, displays tests passed info message
+ - If equal to `TESTS_FAILED` const, warning is displayed and `pkg` added to `errs`
+ - If anything else, throws a `PkgTestError`
+"""
+function checkexitcode!(errs, proc, pkg, logfilename)
+    if proc.exitcode == 0
+        @info "$pkg tests passed. Results saved to $logfilename."
+    elseif proc.exitcode == TESTS_FAILED
+        @warn "ERROR: Test(s) failed or had an error in $pkg"
+        push!(errs, pkg)
+    else
+        throw(PkgTestError("TestReports failed to generate the report.\nSee error log above."))
+    end
+end
+
+"""
+    runtests!(errs::Vector, pkg, cmd, logfilename)
+
+Runs `cmd` which will run the tests of `pkg`. The exit code of the process
+is then checked.
+"""
+function runtests!(errs::Vector, pkg, cmd, logfilename)
+    @info "Testing $pkg"
+    proc = open(cmd, Base.stdout; write=true)
+    wait(proc)
+    checkexitcode!(errs, proc, pkg, logfilename)
+end
+
+"""
+    test!(pkg::AbstractString,
+          errs::Vector{AbstractString},
+          nopkgs::Vector{AbstractString},
+          notests::Vector{AbstractString},
+          logfilename::AbstractString;
+          coverage::Bool=false,
+          julia_args::Union{Cmd, AbstractVector{<:AbstractString}}=``,
+          test_args::Union{Cmd, AbstractVector{<:AbstractString}}=``)
+
+Tests `pkg` and save report to `logfilename`. Tests are run in the same way
+as `Pkg.test`.
+
+If tests error `pkg` is added to `nopkgs`. If `pkg` has no testfile it is added to
+`notests`. If `pkg` is not installed it is added to `nopkgs`.
+"""
+function test!(pkg::AbstractString,
+               errs::Vector{AbstractString},
+               nopkgs::Vector{AbstractString},
+               notests::Vector{AbstractString},
+               logfilename::AbstractString;
+               coverage::Bool=false,
+               julia_args::Union{Cmd, AbstractVector{<:AbstractString}}=``,
+               test_args::Union{Cmd, AbstractVector{<:AbstractString}}=``)
+
+    # Copied from Pkg.test approach
+    julia_args = Cmd(julia_args)
+    test_args = Cmd(test_args)
+    pkgspec = deepcopy(PackageSpec(pkg))
+    ctx = Context()
+    
+    if !isinstalled!(ctx, pkgspec)
+        push!(nopkgs, pkgspec.name)
+        return
+    end
+    Pkg.instantiate(ctx)
+    testfilepath = gettestfilepath(ctx, pkgspec)
+
+    if !isfile(testfilepath)
+        push!(notests, pkg)
+    else
+        runner_code = gen_runner_code(testfilepath, logfilename, test_args)
+        cmd = gen_command(runner_code, julia_args, coverage)
+        test_folder_has_project_file = isfile(joinpath(dirname(testfilepath), "Project.toml"))
+
+        if VERSION >= v"1.4.0" || (VERSION >= v"1.2.0" && test_folder_has_project_file)
+            # Operations.sandbox() has different arguments between versions
+            sandbox_args = (ctx,
+                            pkgspec,
+                            pkgspec.path,
+                            joinpath(pkgspec.path, "test"))
+            if VERSION >= v"1.4.0"
+                test_project_override = test_folder_has_project_file ?
+                    nothing :
+                    gen_target_project(ctx, pkgspec, pkgspec.path, "test")
+                sandbox_args = (sandbox_args..., test_project_override)
+            end
+
+            sandbox(sandbox_args...) do
+                flush(stdout)
+                runtests!(errs, pkg, cmd, logfilename)
+            end
+        else
+            with_dependencies_loadable_at_toplevel(ctx, pkgspec; might_need_to_resolve=true) do localctx
+                Pkg.activate(localctx.env.project_file)
+                try
+                    runtests!(errs, pkg, cmd, logfilename)
+                finally
+                    Pkg.activate(ctx.env.project_file)
+                end
+            end
+        end
+    end
 end
 
 """
     TestReports.test(; kwargs...)
     TestReports.test(pkg::Union{AbstractString, Vector{AbstractString}; kwargs...)
 
-**Keyword arguments:**
+# Keyword arguments:
   - `coverage::Bool=false`: enable or disable generation of coverage statistics.
   - `julia_args::Union{Cmd, Vector{String}}`: options to be passed to the test process.
   - `test_args::Union{Cmd, Vector{String}}`: test arguments (`ARGS`) available in the test process.
@@ -157,113 +302,6 @@ function test(; kwargs...)
     test(ctx.env.pkg.name; kwargs...)
 end
 test(pkg::AbstractString; logfilename::AbstractString="testlog.xml", kwargs...) = test([pkg]; logfilename=[logfilename], kwargs...)
-
-function test!(pkg::AbstractString,
-               errs::Vector{AbstractString},
-               nopkgs::Vector{AbstractString},
-               notests::Vector{AbstractString},
-               logfilename::AbstractString;
-               coverage::Bool=false,
-               julia_args::Union{Cmd, AbstractVector{<:AbstractString}}=``,
-               test_args::Union{Cmd, AbstractVector{<:AbstractString}}=``)
-
-    # Copied from Pkg.test approach
-    julia_args = Cmd(julia_args)
-    test_args = Cmd(test_args)
-    pkgspec = deepcopy(PackageSpec(pkg))
-    ctx = Context()
-    @static if VERSION >= v"1.4.0"
-       if !checkinstalled!(ctx, pkgspec)
-           push!(nopkgs, pkgspec.name)
-           return
-       end
-    else
-       if !checkinstalled!(ctx.env, pkgspec)
-           push!(nopkgs, pkgspec.name)
-           return
-       end
-    end
-
-    Pkg.instantiate(ctx)
-
-    testfilepath = gettestfilepath(ctx, pkgspec)
-
-    if !isfile(testfilepath)
-        push!(notests, pkg)
-    else
-        testreportsdir = dirname(@__DIR__)
-        runner_code = gen_runner_code(testfilepath, logfilename, testreportsdir, test_args)
-        cmd = ```
-            $(Base.julia_cmd())
-            --code-coverage=$(coverage ? "user" : "none")
-            --color=$(Base.have_color === nothing ? "auto" : Base.have_color ? "yes" : "no")
-            --compiled-modules=$(Bool(Base.JLOptions().use_compiled_modules) ? "yes" : "no")
-            --check-bounds=yes
-            --depwarn=$(Base.JLOptions().depwarn == 2 ? "error" : "yes")
-            --inline=$(Bool(Base.JLOptions().can_inline) ? "yes" : "no")
-            --startup-file=$(Base.JLOptions().startupfile != 2 ? "yes" : "no")
-            --track-allocation=$(("none", "user", "all")[Base.JLOptions().malloc_log + 1])
-            $(julia_args)
-            --eval $(runner_code)
-            ```
-
-        test_folder_has_project_file = isfile(joinpath(dirname(testfilepath), "Project.toml"))
-
-        if VERSION >= v"1.4.0" || (VERSION >= v"1.2.0" && test_folder_has_project_file)
-            # Operations.sandbox() has different arguments between versions
-            sandbox_args = (ctx,
-                            pkgspec,
-                            pkgspec.path,
-                            joinpath(pkgspec.path, "test"))
-            if VERSION >= v"1.4.0"
-                test_project_override = test_folder_has_project_file ?
-                    nothing :
-                    gen_target_project(ctx, pkgspec, pkgspec.path, "test")
-                sandbox_args = (sandbox_args..., test_project_override)
-            end
-
-            sandbox(sandbox_args...) do
-                flush(stdout)
-                @info "Testing $pkg"
-                proc = open(cmd, Base.stdout; write=true)
-                wait(proc)
-                if proc.exitcode == 0
-                    @info "$pkg tests passed. Results saved to $logfilename."
-                elseif proc.exitcode == TESTS_FAILED
-                    @warn "ERROR: Test(s) failed or had an error in $pkg"
-                    push!(errs, pkg)
-                else
-                    throw(PkgTestError("TestReports failed to generate the report.\nSee error log above."))
-                end
-            end
-        else
-            with_dependencies_loadable_at_toplevel(ctx, pkgspec; might_need_to_resolve=true) do localctx
-                @info "Testing $pkg"
-                Pkg.activate(localctx.env.project_file)
-                proc = open(cmd, Base.stdout; write=true)
-                wait(proc)
-                Pkg.activate(ctx.env.project_file)
-                if proc.exitcode == 0
-                    @info "$pkg tests passed. Results saved to $logfilename."
-                elseif proc.exitcode == TESTS_FAILED
-                    @warn "ERROR: Test(s) failed or had an error in $pkg"
-                    push!(errs, pkg)
-                else
-                    throw(PkgTestError("TestReports failed to generate the report.\nSee error log above."))
-                end
-            end
-        end
-    end
-end
-
-struct PkgTestError <: Exception
-    msg::AbstractString
-end
-
-function Base.showerror(io::IO, ex::PkgTestError, bt; backtrace=true)
-    printstyled(io, ex.msg, color=Base.error_color())
-end
-
 function test(pkgs::Vector{<:AbstractString}; 
               logfilename::Vector{<:AbstractString}=[pkg * "_testlog.xml" for pkg in pkgs], 
               logfilepath::AbstractString=pwd(), 
@@ -297,4 +335,12 @@ function test(pkgs::Vector{<:AbstractString};
         end
         throw(PkgTestError(join(messages, " and ")))
     end
+end
+
+struct PkgTestError <: Exception
+    msg::AbstractString
+end
+
+function Base.showerror(io::IO, ex::PkgTestError, bt; backtrace=true)
+    printstyled(io, ex.msg, color=Base.error_color())
 end

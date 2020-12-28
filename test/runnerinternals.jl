@@ -8,7 +8,7 @@ if VERSION < v"1.2.0"
         stdlibname = "Dates"
         ctx = Pkg.Types.Context()
         pkg = Pkg.PackageSpec(stdlibname)
-        TestReports.checkinstalled!(ctx.env, pkg)
+        TestReports.isinstalled!(ctx, pkg)
         delete!(ctx.env.manifest[stdlibname][1], "path")  # Remove path to force stdlib check
         testfilepath = joinpath(abspath(joinpath(dirname(Base.find_package(stdlibname)), "..")), "test", "runtests.jl")
         @test TestReports.gettestfilepath(ctx, pkg) == testfilepath
@@ -18,7 +18,7 @@ if VERSION < v"1.2.0"
         Pkg.develop(Pkg.PackageSpec(path=joinpath(@__DIR__, "test_packages", pkgname)))
         ctx = Pkg.Types.Context()
         pkg = Pkg.PackageSpec(pkgname)
-        TestReports.checkinstalled!(ctx.env, pkg)
+        TestReports.isinstalled!(ctx, pkg)
         delete!(ctx.env.manifest["PassingTests"][1], "path")
         @test_throws TestReports.PkgTestError TestReports.gettestfilepath(ctx, pkg)
         Pkg.rm(Pkg.PackageSpec(path=joinpath(@__DIR__, "test_packages", pkgname)))
