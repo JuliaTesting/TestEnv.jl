@@ -20,18 +20,108 @@ end
 const TESTS_FAILED = 3
 
 """
+    get_deps(manifest, pkg) = get_deps!(String[], manifest, pkg)
+
+Get list of dependencies for `pkg` found in `manifest`
+"""
+get_deps(manifest, pkg) = get_deps!(String[], manifest, pkg)
+
+"""
+    get_deps!(deps, manifest, pkg)
+
+Push dependencies for `pkg` found in `manifest` into `deps`.
+"""
+function get_deps!(deps, manifest, pkg)
+    if haskey(manifest[pkg][1], "deps")
+        for dep in manifest[pkg][1]["deps"]
+            if !(dep in deps)
+                push!(deps, dep)
+                get_deps!(deps, manifest, dep)
+            end
+        end
+    end
+    return unique(deps)
+end
+
+"""
+    get_manifest()
+
+Return the parsed manifest that has `TestReports` as a dependency.
+"""
+function get_manifest()
+    # Check all environments in LOAD_PATH to see if `TestReports` is
+    # in the manifest
+    for path in Base.load_path()
+        manifest_path = replace(path, "Project.toml"=>"Manifest.toml")
+        if isfile(manifest_path)
+            manifest = Pkg.TOML.parsefile(manifest_path)
+            haskey(manifest, "TestReports") && return manifest
+        end
+    end
+
+    # Should be impossible to get here, but let's error just in case.
+    throw(PkgTestError("No environment has TestReports as a dependency and TestReports is not the active project."))
+    return
+end
+
+"""
+    make_testreports_environment(manifest)
+
+Make a new environment in a temporary directory, using information
+from the parsed `manifest` provided.
+"""
+function make_testreports_environment(manifest)
+    all_deps = get_deps(manifest, "TestReports")
+    push!(all_deps, "TestReports")
+    new_manifest = Dict(pkg => manifest[pkg] for pkg in all_deps)
+
+    new_project = Dict(
+        "deps" => Dict(
+            "Test" => new_manifest["Test"][1]["uuid"],
+            "TestReports" => new_manifest["TestReports"][1]["uuid"]
+        )
+    )
+    testreportsenv = mktempdir()
+    open(joinpath(testreportsenv, "Project.toml"), "w") do io
+        Pkg.TOML.print(io, new_project)
+    end
+    open(joinpath(testreportsenv, "Manifest.toml"), "w") do io
+        Pkg.TOML.print(io, new_manifest, sorted=true)
+    end
+    return testreportsenv
+end
+
+"""
+    get_testreports_environment()
+
+Returns new environment to be pushed to `LOAD_PATH` to ensure `TestReports`,
+`Test` and their dependencies are available for report generation.
+"""
+function get_testreports_environment()
+    manifest = get_manifest()    
+    return make_testreports_environment(manifest)
+end
+
+"""
     gen_runner_code(testfilename, logfilename, test_args)
 
 Returns runner code that will run the tests and generate the report in a new
 Julia instance.
 """
 function gen_runner_code(testfilename, logfilename, test_args)
-    testreportsdir = dirname(@__DIR__)
+    if Base.active_project() == joinpath(dirname(@__DIR__), "Project.toml")
+        # TestReports is the active project, so push first so correct version is used
+        load_path_text = "pushfirst!(Base.LOAD_PATH, $(repr(dirname(@__DIR__))))"
+    else
+        # TestReports is a dependency of one of the environments, find and build temporary environment
+        testreportsenv = get_testreports_environment()
+        load_path_text = "push!(Base.LOAD_PATH, $(repr(testreportsenv)))"
+    end
 
     runner_code = """
         $(Base.load_path_setup_code(false))
 
-        pushfirst!(Base.LOAD_PATH, $(repr(testreportsdir)))
+        $load_path_text
 
         using Test
         using TestReports
