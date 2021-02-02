@@ -146,6 +146,12 @@ Returns `Cmd` which will run the runner code in a new Julia instance.
 See also: [`gen_runner_code`](@ref)
 """
 function gen_command(runner_code, julia_args, coverage)
+    @static if VERSION >= v"1.5.0"
+        threads_cmd = `--threads=$(Threads.nthreads())`
+    else
+        threads_cmd = ``
+    end
+
     cmd = ```
         $(Base.julia_cmd())
         --code-coverage=$(coverage ? "user" : "none")
@@ -154,8 +160,9 @@ function gen_command(runner_code, julia_args, coverage)
         --check-bounds=yes
         --depwarn=$(Base.JLOptions().depwarn == 2 ? "error" : "yes")
         --inline=$(Bool(Base.JLOptions().can_inline) ? "yes" : "no")
-        --startup-file=$(Base.JLOptions().startupfile != 2 ? "yes" : "no")
+        --startup-file=$(Base.JLOptions().startupfile == 1 ? "yes" : "no")
         --track-allocation=$(("none", "user", "all")[Base.JLOptions().malloc_log + 1])
+        $threads_cmd
         $(julia_args)
         --eval $(runner_code)
         ```
