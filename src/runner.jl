@@ -1,21 +1,3 @@
-using Pkg
-import Pkg: PackageSpec, Types
-import Pkg.Types: Context, EnvCache, ensure_resolved, is_project_uuid
-import Pkg.Operations: project_resolve!, project_deps_resolve!, manifest_resolve!, manifest_info, project_rel_path
-
-# Version specific imports
-@static if VERSION >= v"1.4.0"
-    import Pkg.Operations: gen_target_project
-else
-    import Pkg.Operations: with_dependencies_loadable_at_toplevel
-end
-@static if VERSION >= v"1.2.0"
-    import Pkg.Operations: update_package_test!, source_path, sandbox
-else
-    import Pkg.Operations: find_installed
-    import Pkg.Types: SHA1
-end
-
 "Exit code for runner when tests fail"
 const TESTS_FAILED = 3
 
@@ -170,7 +152,7 @@ function gen_command(runner_code, julia_args, coverage)
 end
 
 """
-    isinstalled!(ctx::Union{Context, EnvCache}, pkgspec::Types.PackageSpec)
+    isinstalled!(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
 
 Checks if the package is installed by using `ensure_resolved` from `Pkg/src/Types.jl`.
 This function fails if the package is not installed, but here we wrap it in a
@@ -180,7 +162,7 @@ For Julia versions V1.4 and later, the first arguments of the Pkg functions used
 is of type `Pkg.Types.Context`. For earlier versions, they are of type
 `Pkg.Types.EnvCache`.
 """
-function isinstalled!(ctx::Context, pkgspec::Types.PackageSpec)
+function isinstalled!(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
     @static if VERSION >= v"1.4.0"
         var = ctx
     else
@@ -198,12 +180,12 @@ function isinstalled!(ctx::Context, pkgspec::Types.PackageSpec)
 end
 
 """
-    gettestfilepath(ctx::Context, pkgspec::Types.PackageSpec)
+    gettestfilepath(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
 
 Gets the testfile path of the package. Code for each Julia version mirrors that found 
 in `Pkg/src/Operations.jl`.
 """
-function gettestfilepath(ctx::Context, pkgspec::Types.PackageSpec)
+function gettestfilepath(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
     @static if VERSION >= v"1.4.0"
         if is_project_uuid(ctx, pkgspec.uuid)
             pkgspec.path = dirname(ctx.env.project_file)
@@ -235,7 +217,7 @@ function gettestfilepath(ctx::Context, pkgspec::Types.PackageSpec)
             elseif entry.path !== nothing
                 pkgfilepath =  project_rel_path(ctx, entry.path)
             elseif pkgspec.uuid in keys(ctx.stdlibs)
-                pkgfilepath = Types.stdlib_path(pkgspec.name)
+                pkgfilepath = Pkg.Types.stdlib_path(pkgspec.name)
             else
                 throw(PkgTestError("Could not find either `git-tree-sha1` or `path` for package $(pkgspec.name)"))
             end
@@ -252,7 +234,7 @@ function gettestfilepath(ctx::Context, pkgspec::Types.PackageSpec)
             elseif haskey(info, "path")
                 pkgfilepath =  project_rel_path(ctx, info["path"])
             elseif pkgspec.uuid in keys(ctx.stdlibs)
-                pkgfilepath = Types.stdlib_path(pkgspec.name)
+                pkgfilepath = Pkg.Types.stdlib_path(pkgspec.name)
             else
                 throw(PkgTestError("Could not find either `git-tree-sha1` or `path` for package $(pkgspec.name)"))
             end
