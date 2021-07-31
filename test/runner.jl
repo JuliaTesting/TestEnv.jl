@@ -45,11 +45,11 @@ VERSION >= v"1.3" && @testset "activate test/Project" begin
     @test isdefined(@__MODULE__, :CSV)
 end
 
-VERSION >= v"1.4" && @testset "activate do test/Project" begin
+VERSION >= v"1.2" && @testset "activate do test/Project" begin
     Pkg.activate(mktempdir())
-    # Javis has a test/Project.toml, which contains Latexify
-    Pkg.add("Javis")
+    # MCMCDiagnosticTools has a test/Project.toml, which contains FFTW
+    Pkg.add("MCMCDiagnosticTools")
 
-    TestEnv.activate(()->(@eval using Latexify), "Javis")
-    @test isdefined(@__MODULE__, :Latexify)
+    TestEnv.activate(()->(@eval using FFTW), "MCMCDiagnosticTools")
+    @test isdefined(@__MODULE__, :FFTW)
 end

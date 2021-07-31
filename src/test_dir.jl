@@ -1,4 +1,4 @@
-function test_dir_has_project_file(ctx, pkgspec)
+[function test_dir_has_project_file(ctx, pkgspec)
     return isfile(joinpath(get_test_dir(ctx, pkgspec), "Project.toml"))
 end
 
@@ -9,7 +9,16 @@ Gets the testfile path of the package. Code for each Julia version mirrors that 
 in `Pkg/src/Operations.jl`.
 """
 function get_test_dir(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
-    @static if VERSION >= v"1.4.0"
+    @static if VERSION >= v"1.7.0-a"
+        if is_project_uuid(ctx.env, pkgspec.uuid)
+            pkgspec.path = dirname(ctx.env.project_file)
+            pkgspec.version = ctx.env.pkg.version
+        else
+            update_package_test!(pkgspec, manifest_info(ctx.env.manifest, pkgspec.uuid))
+            pkgspec.path = project_rel_path(ctx.env, source_path(ctx.env.project_file, pkgspec))
+        end
+        pkgfilepath = source_path(ctx.env.project_file, pkgspec)
+    elseif VERSION >= v"1.4.0"
         if is_project_uuid(ctx, pkgspec.uuid)
             pkgspec.path = dirname(ctx.env.project_file)
             pkgspec.version = ctx.env.pkg.version
@@ -65,3 +74,4 @@ function get_test_dir(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
     end
     return joinpath(pkgfilepath, "test")
 end
+]

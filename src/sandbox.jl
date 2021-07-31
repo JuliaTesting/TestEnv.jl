@@ -10,8 +10,20 @@ elseif VERSION <= v"1.3" # 1.2 or 1.3
             f()
         end
     end
+elseif VERSION >= v"1.7-a"
+    function _sandbox(f, ctx, pkgspec)
+        test_project_override = if !test_dir_has_project_file(ctx, pkgspec)
+            gen_target_project(ctx.env, ctx.registries, pkgspec, pkgspec.path, "test")
+        else
+            nothing
+        end
+        return sandbox(ctx, pkgspec, pkgspec.path, joinpath(pkgspec.path, "test"), test_project_override) do
+            flush(stdout)
+            f()
+        end
+    end
 else
-    @assert VERSION >= v"1.4"
+    @assert VERSION >= v"1.3"
     function _sandbox(f, ctx, pkgspec)
         test_project_override = if !test_dir_has_project_file(ctx, pkgspec)
             gen_target_project(ctx, pkgspec, pkgspec.path, "test")

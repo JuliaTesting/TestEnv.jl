@@ -15,7 +15,11 @@ else
     function make_test_env(ctx::Context, target)
         # This needs to be first as `gen_target_project` fixes `target.path` if it is nothing
         sandbox_project_override = if !test_dir_has_project_file(ctx, target)
-            sandbox_project_override = gen_target_project(ctx, target, target.path, "test")
+            sandbox_project_override = @static if VERSION < v"1.7-a"
+                gen_target_project(ctx, target, target.path, "test")
+            else
+                gen_target_project(ctx.env, ctx.registries, target, target.path, "test")
+            end
         else
             nothing
         end
@@ -37,11 +41,19 @@ else
         # create merged manifest
         # - copy over active subgraph
         # - abspath! to maintain location of all deved nodes
-        working_manifest = abspath!(ctx, sandbox_preserve(ctx, target, tmp_project))
+        working_manifest = if VERSION <= v"1.7-a"
+            abspath!(ctx, sandbox_preserve(ctx, target, tmp_project))
+        else
+            abspath!(ctx.env, sandbox_preserve(ctx.env, target, tmp_project))
+        end
         # - copy over fixed subgraphs from test subgraph
         # really only need to copy over "special" nodes
         sandbox_env = Types.EnvCache(projectfile_path(sandbox_path))
-        sandbox_manifest = abspath!(sandbox_path, sandbox_env.manifest)
+        sandbox_manifest = if VERSION <= v"1.7-a"
+            abspath!(sandbox_path, sandbox_env.manifest)
+        else
+            abspath!(sandbox_env, sandbox_env.manifest)
+        end
         for (name, uuid) in sandbox_env.project.deps
             entry = get(sandbox_manifest, uuid, nothing)
             if entry !== nothing && isfixed(entry)
