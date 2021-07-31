@@ -8,13 +8,26 @@
 
 This is a 1-function package: `TestEnv.activate()`.
 
-Consider this package has as a test-only dependency of **Example.jl**.
+Consider this package has as a test-only dependency of **ChainRulesCore.jl**.
 Not a main dependency
 
 ```julia
 julia> using TestEnv;
 
-julia> TestEnv.activate(".");
+julia> TestEnv.activate();
 
-julia> using Example
+julia> using ChainRulesCore
 ```
+
+You an also pass in the name of a package, to activate that package and it's test dependencies:
+`TestEnv.activate("Javis")` for example would activate Javis.jl's test environment.
+
+Finally you can pass in a function to run in this environment.
+```julia
+using TestEnv, ReTest
+TestEnv.activate("Example") do
+    retest()
+end
+```
+
+
