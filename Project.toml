@@ -1,16 +1,18 @@
 name = "TestEnv"
 uuid = "1e6cf692-eddd-4d53-88a5-2d735e33781b"
-version = "0.1.0"
+version = "1.0.0"
 
 [deps]
+ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
 [compat]
+ChainRulesCore = "=1.0.2"
 julia = "1"
 
 [extras]
-Example = "7876af07-990d-54b4-ab0e-23690620f79a"
+ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Example", "Test"]
+test = ["ChainRulesCore", "Test"]
