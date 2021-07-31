@@ -1,8 +1,10 @@
 # Originally from Pkg.Operations.sandbox
 function make_test_env(ctx::Context, target)
     # This needs to be first as `gen_target_project` fixes `target.path` if it is nothing
-    if !test_dir_has_project_file(ctx, target)
+    sandbox_project_override = if !test_dir_has_project_file(ctx, target)
         sandbox_project_override = gen_target_project(ctx, target, target.path, "test")
+    else
+        nothing
     end
 
     sandbox_path = joinpath(target.path, "test")

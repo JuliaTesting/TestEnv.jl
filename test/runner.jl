@@ -12,7 +12,7 @@ if VERSION < v"1.2.0"
     end
 end
 
-@testset "activate do f" begin
+@testset "activate do f [extras]" begin
     if VERSION >= v"1.4"  # can't check dependencies until julia 1.4
         direct_deps() = [v.name for (_,v) in Pkg.dependencies() if v.is_direct_dep]
         crc_deps = TestEnv.activate(direct_deps, "ChainRulesCore")
@@ -25,7 +25,7 @@ end
     @test isdefined(@__MODULE__, :FiniteDifferences)
 end
 
-@testset "activate" begin
+@testset "activate [extras]" begin
     orig_project_toml_path = Base.active_project()
     new_project_toml_path = TestEnv.activate("ChainRulesCore")
     @test new_project_toml_path != orig_project_toml_path
@@ -35,3 +35,21 @@ end
     @test isdefined(@__MODULE__, :StaticArrays)
 end
 
+
+VERSION >= v"1.3" && @testset "activate test/Project" begin
+    Pkg.activate(temp=true)
+    # YAXArrays has a test/Project.toml, which contains CSV
+    Pkg.add("YAXArrays")
+    TestEnv.activate("YAXArrays")
+    @eval using CSV
+    @test isdefined(@__MODULE__, :CSV)
+end
+
+VERSION >= v"1.4" && @testset "activate do test/Project" begin
+    Pkg.activate(temp=true)
+    # Javis has a test/Project.toml, which contains Latexify
+    Pkg.add("Javis")
+
+    TestEnv.activate(()->(@eval using Latexify), "Javis")
+    @test isdefined(@__MODULE__, :Latexify)
+end
