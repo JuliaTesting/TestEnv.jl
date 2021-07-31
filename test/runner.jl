@@ -27,9 +27,9 @@ end
 
 @testset "activate [extras]" begin
     orig_project_toml_path = Base.active_project()
-    new_project_toml_path = TestEnv.activate("ChainRulesCore")
+    TestEnv.activate("ChainRulesCore")
+    new_project_toml_path = Base.active_project()
     @test new_project_toml_path != orig_project_toml_path
-    @test new_project_toml_path == Base.active_project()
 
     @eval using StaticArrays
     @test isdefined(@__MODULE__, :StaticArrays)
@@ -37,7 +37,7 @@ end
 
 
 VERSION >= v"1.3" && @testset "activate test/Project" begin
-    Pkg.activate(temp=true)
+    Pkg.activate(mktempdir())
     # YAXArrays has a test/Project.toml, which contains CSV
     Pkg.add("YAXArrays")
     TestEnv.activate("YAXArrays")
@@ -46,7 +46,7 @@ VERSION >= v"1.3" && @testset "activate test/Project" begin
 end
 
 VERSION >= v"1.4" && @testset "activate do test/Project" begin
-    Pkg.activate(temp=true)
+    Pkg.activate(mktempdir())
     # Javis has a test/Project.toml, which contains Latexify
     Pkg.add("Javis")
 

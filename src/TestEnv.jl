@@ -1,10 +1,9 @@
 module TestEnv
 using Pkg
 using Pkg: PackageSpec
-using Pkg.Types: Context, ensure_resolved, is_project_uuid, is_stdlib, write_env
+using Pkg.Types: Context, ensure_resolved, is_project_uuid, write_env
 using Pkg.Operations: manifest_info, manifest_resolve!, project_deps_resolve!
 using Pkg.Operations: project_rel_path, project_resolve!
-using Pkg.Operations: sandbox_preserve, abspath!
 
 using Pkg.Types: Types, projectfile_path, manifestfile_path
 
@@ -15,7 +14,8 @@ else
     using Pkg.Operations: with_dependencies_loadable_at_toplevel
 end
 @static if VERSION >= v"1.2.0"
-    using Pkg.Operations: sandbox, source_path, update_package_test! 
+    using Pkg.Types: is_stdlib
+    using Pkg.Operations: sandbox, source_path, update_package_test! , sandbox_preserve, abspath!
 else
     using Pkg.Operations: find_installed
     using Pkg.Types: SHA1
