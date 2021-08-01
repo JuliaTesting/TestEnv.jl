@@ -19,7 +19,7 @@ julia> TestEnv.activate();
 julia> using ChainRulesCore
 ```
 
-You an also pass in the name of a package, to activate that package and it's test dependencies:
+You can also pass in the name of a package, to activate that package and it's test dependencies:
 `TestEnv.activate("Javis")` for example would activate Javis.jl's test environment.
 
 Finally you can pass in a function to run in this environment.
