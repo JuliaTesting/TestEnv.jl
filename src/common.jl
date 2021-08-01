@@ -56,20 +56,20 @@ Gets the testfile path of the package. Code for each Julia version mirrors that 
 in `Pkg/src/Operations.jl`.
 """
 function get_test_dir(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
-        if is_project_uuid(ctx.env, pkgspec.uuid)
-            pkgspec.path = dirname(ctx.env.project_file)
-            pkgspec.version = ctx.env.pkg.version
-        else
-            is_stdlib(pkgspec.uuid) && return
-            entry = manifest_info(ctx.env.manifest, pkgspec.uuid)
-            pkgspec.version = entry.version
-            pkgspec.tree_hash = entry.tree_hash
-            pkgspec.repo = entry.repo
-            pkgspec.path = entry.path
-            pkgspec.pinned = entry.pinned
-            pkgspec.path = project_rel_path(ctx.env, source_path(ctx.env.project_file, pkgspec))
-        end
-        pkgfilepath = source_path(ctx.env.project_file, pkgspec)
+    if is_project_uuid(ctx.env, pkgspec.uuid)
+        pkgspec.path = dirname(ctx.env.project_file)
+        pkgspec.version = ctx.env.pkg.version
+    else
+        is_stdlib(pkgspec.uuid) && return
+        entry = manifest_info(ctx.env.manifest, pkgspec.uuid)
+        pkgspec.version = entry.version
+        pkgspec.tree_hash = entry.tree_hash
+        pkgspec.repo = entry.repo
+        pkgspec.path = entry.path
+        pkgspec.pinned = entry.pinned
+        pkgspec.path = project_rel_path(ctx.env, source_path(ctx.env.project_file, pkgspec))
+    end
+    pkgfilepath = source_path(ctx.env.project_file, pkgspec)
     return joinpath(pkgfilepath, "test")
 end
 
