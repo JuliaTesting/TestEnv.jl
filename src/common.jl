@@ -58,17 +58,16 @@ function get_test_dir(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
     if is_project_uuid(ctx.env, pkgspec.uuid)
         pkgspec.version = ctx.env.pkg.version
         pkgfilepath = dirname(ctx.env.project_file)
-    else        
-        info = manifest_info(ctx.env, pkgspec.uuid)
-        if haskey(info, "git-tree-sha1")
-            pkgfilepath = find_installed(pkgspec.name, pkgspec.uuid, SHA1(info["git-tree-sha1"]))
-        elseif haskey(info, "path")
-            pkgfilepath =  project_rel_path(ctx, info["path"])
+    else
+        entry = manifest_info(ctx.env, pkgspec.uuid)
+        if entry.repo.tree_sha !== nothing
+            pkgfilepath = find_installed(pkgspec.name, pkgspec.uuid, entry.repo.tree_sha)
+        elseif entry.path !== nothing
+            pkgfilepath =  project_rel_path(ctx, entry.path)
         elseif pkgspec.uuid in keys(ctx.stdlibs)
             pkgfilepath = Pkg.Types.stdlib_path(pkgspec.name)
         else
             throw(TestEnvError("Could not find either `git-tree-sha1` or `path` for package $(pkgspec.name)"))
         end
     end
-    return joinpath(pkgfilepath, "test")
 end
