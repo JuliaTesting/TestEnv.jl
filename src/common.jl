@@ -34,6 +34,7 @@ function isinstalled!(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
     project_resolve!(ctx.env, [pkgspec])
     project_deps_resolve!(ctx.env, [pkgspec])
     manifest_resolve!(ctx.env, [pkgspec])
+
     try
         ensure_resolved(ctx.env, [pkgspec])
     catch err
@@ -42,6 +43,7 @@ function isinstalled!(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
     end
     return true
 end
+
 
 function test_dir_has_project_file(ctx, pkgspec)
     return isfile(joinpath(get_test_dir(ctx, pkgspec), "Project.toml"))
@@ -56,18 +58,12 @@ in `Pkg/src/Operations.jl`.
 function get_test_dir(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
     pkgspec.special_action = Pkg.Types.PKGSPEC_TESTED
     if is_project_uuid(ctx.env, pkgspec.uuid)
+        pkgspec.path = dirname(ctx.env.project_file)
         pkgspec.version = ctx.env.pkg.version
-        pkgfilepath = dirname(ctx.env.project_file)
     else
-        entry = manifest_info(ctx.env, pkgspec.uuid)
-        if entry.repo.tree_sha !== nothing
-            pkgfilepath = find_installed(pkgspec.name, pkgspec.uuid, entry.repo.tree_sha)
-        elseif entry.path !== nothing
-            pkgfilepath =  project_rel_path(ctx, entry.path)
-        elseif pkgspec.uuid in keys(ctx.stdlibs)
-            pkgfilepath = Pkg.Types.stdlib_path(pkgspec.name)
-        else
-            throw(TestEnvError("Could not find either `git-tree-sha1` or `path` for package $(pkgspec.name)"))
-        end
+        update_package_test!(pkgspec, manifest_info(ctx.env, pkgspec.uuid))
+        pkgspec.path = joinpath(project_rel_path(ctx, source_path(pkgspec)))
     end
+    pkgfilepath = project_rel_path(ctx, source_path(pkgspec))
+    return joinpath(pkgfilepath, "test")
 end
