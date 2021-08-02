@@ -10,16 +10,21 @@ However, this *is* useful for anyone doing something like making a alternative t
 Indeed this is basically extracted from what `Pkg.test()` does.
 """
 function activate(f, pkg::AbstractString=current_pkg_name())
-    ctx, pkgspec = ctx_and_pkgspec(pkg)
-    
-    get_test_dir(ctx, pkgspec)  # HACK: a side effect of this is to fix pkgspec
-    with_dependencies_loadable_at_toplevel(ctx, pkgspec; might_need_to_resolve=true) do localctx
-        Pkg.activate(localctx.env.project_file)
-        try
+    ctx, pkgspec = ctx_and_pkgspec(pkg)    
+    if test_dir_has_project_file(ctx, pkgspec)
+        sandbox(ctx, pkgspec, pkgspec.path, joinpath(pkgspec.path, "test")) do
             flush(stdout)
             f()
-        finally
-            Pkg.activate(ctx.env.project_file)
+        end
+    else
+        with_dependencies_loadable_at_toplevel(ctx, pkgspec; might_need_to_resolve=true) do localctx
+            Pkg.activate(localctx.env.project_file)
+            try
+                flush(stdout)
+                f()
+            finally
+                Pkg.activate(ctx.env.project_file)
+            end
         end
     end
 end
