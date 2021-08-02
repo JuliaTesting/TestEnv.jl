@@ -3,7 +3,6 @@ uuid = "1e6cf692-eddd-4d53-88a5-2d735e33781b"
 version = "1.2.0"
 
 [deps]
-ConstraintSolver = "e0e52ebd-5523-408d-9ca3-7641f1cd1405"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
 [compat]
@@ -12,8 +11,9 @@ ConstraintSolver = "=0.6.10"
 julia = "~1.2"
 
 [extras]
+ConstraintSolver = "e0e52ebd-5523-408d-9ca3-7641f1cd1405"
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["ChainRulesCore", "Test"]
+test = ["ChainRulesCore", "Test", "ConstraintSolver"]
