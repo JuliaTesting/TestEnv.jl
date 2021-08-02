@@ -40,7 +40,7 @@ And we tag releases off that branch with major and minor versions matching the j
 
  - [release-1.0](https://github.com/JuliaTesting/TestEnv.jl/tree/release-1.0) contains the code to support julia v1.0.x
  - [release-1.1](https://github.com/JuliaTesting/TestEnv.jl/tree/release-1.1) contains the code to support julia v1.1.x
- - release-1.2 does not exist yet, as we do not yet support julia 1.2
+ - [release-1.2](https://github.com/JuliaTesting/TestEnv.jl/tree/release-1.2) contains the code to support julia v1.2.x
  - [release-1.3](https://github.com/JuliaTesting/TestEnv.jl/tree/release-1.3) contains the code to support julia v1.3.x
  - [release-1.4](https://github.com/JuliaTesting/TestEnv.jl/tree/release-1.4) contains the code to support julia v1.4.x, 1.5.x, 1.6.x
     - This branch is notably weird, because this is where we started and we tried to maintain support for multiple versions in 1 branch.
