@@ -8,9 +8,9 @@
 
     @testset "activate do test/Project" begin
         # MCMCDiagnosticTools has a test/Project.toml, which contains FFTW
-        TestEnv.activate("MCMCDiagnosticTools") do
-            @eval using FFTW
+        TestEnv.activate("ConstraintSolver") do
+            @eval using Combinatorics
         end
-        @test isdefined(@__MODULE__, :FFTW)
+        @test isdefined(@__MODULE__, :Combinatorics)
     end
 end

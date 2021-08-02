@@ -17,12 +17,12 @@
         orig_project_toml_path = Base.active_project()
         try
             # YAXArrays has a test/Project.toml, which contains CSV
-            TestEnv.activate("YAXArrays")
+            TestEnv.activate("ConstraintSolver")
             new_project_toml_path = Base.active_project()
             @test new_project_toml_path != orig_project_toml_path
 
-            @eval using CSV
-            @test isdefined(@__MODULE__, :CSV)
+            @eval using JSON
+            @test isdefined(@__MODULE__, :JSON)
         finally
             Pkg.activate(orig_project_toml_path)
         end

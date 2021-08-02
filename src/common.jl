@@ -67,3 +67,18 @@ function get_test_dir(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
     pkgfilepath = project_rel_path(ctx, source_path(pkgspec))
     return joinpath(pkgfilepath, "test")
 end
+
+
+function sandbox_mutable_dir(pkgspec)
+    # got to copy the project.toml from the test dir out somewhere else
+    # so can change there modes, so that can remove readonly flag so that when the
+    # the temp-env inside the sandbox creates a copy of them (again) that copy has the
+    # write permission.
+    sandbox_outer_dir = mktempdir()
+    cp(joinpath(pkgspec.path, "test", "Project.toml"), joinpath(sandbox_outer_dir, "Project.toml"))
+    if isfile(joinpath(pkgspec.path, "test", "Manifest.toml"))
+        cp(joinpath(pkgspec.path, "test", "Manifest.toml"), joinpath(sandbox_outer_dir, "Manifest.toml"))
+    end
+    chmod(sandbox_outer_dir, 0o700; recursive=true)
+    return sandbox_outer_dir
+end
