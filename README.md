@@ -4,12 +4,17 @@
 [![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
 
 
-This is a 1-function package: `TestEnv.activate()`.
+This is a 1-function package: `TestEnv.activate`.
+It lets you activate the test enviroment from a given package.
+Just like `Pkg.activate` lets you activate it's main enviroment.
 
-Consider this package has as a test-only dependency of **ChainRulesCore.jl**.
+
+Consider for example `**ChainRules.jl** has as a test-only dependency of **ChainRulesTestUtils.jl**.
 Not a main dependency
 
 ```julia
+pkg> activate ~/.julia/dev/ChainRules
+
 julia> using TestEnv;
 
 julia> TestEnv.activate();
