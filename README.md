@@ -9,8 +9,8 @@ It lets you activate the test enviroment from a given package.
 Just like `Pkg.activate` lets you activate it's main enviroment.
 
 
-Consider for example `**ChainRules.jl** has as a test-only dependency of **ChainRulesTestUtils.jl**.
-Not a main dependency
+Consider for example **ChainRules.jl** has as a test-only dependency of **ChainRulesTestUtils.jl**,
+not a main dependency
 
 ```julia
 pkg> activate ~/.julia/dev/ChainRules
@@ -21,6 +21,8 @@ julia> TestEnv.activate();
 
 julia> using ChainRulesCore
 ```
+
+Use `Pkg.activate` to re-activate the previous environment, e.g. `Pkg.activate("~/.julia/dev/ChainRules")`.
 
 You can also pass in the name of a package, to activate that package and it's test dependencies:
 `TestEnv.activate("Javis")` for example would activate Javis.jl's test environment.
