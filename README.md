@@ -19,7 +19,7 @@ julia> using TestEnv;
 
 julia> TestEnv.activate();
 
-julia> using ChainRulesCore
+julia> using ChainRulesTestUtils
 ```
 
 Use `Pkg.activate` to re-activate the previous environment, e.g. `Pkg.activate("~/.julia/dev/ChainRules")`.
