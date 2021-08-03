@@ -57,7 +57,7 @@ And we tag releases off that branch with major and minor versions matching the j
  - [release-1.8](https://github.com/JuliaTesting/TestEnv.jl/tree/release-1.8) contains the code to support julia v1.8.x
 
 
-**Do not make PRs against this branch.**
+**Do not make PRs against this COVER branch.**
 Except to update this README.
 Instread you probably want to PR a branch for some current version of Julia.
 
@@ -73,3 +73,6 @@ Do not fear, the package manager has your back.
 If you put in your `[compat]` for `TestEnv=`: `1` or equivalently `1.0` or `1.0` or `1.0.0` or `^1`, or `^1.0` or `^1.0` or `^1.0.0`,
 then the package manager is free to choose any compatible versiox `v` with `1.0.0 <= v < 2.0.0`.
 It will thus chose the corret minor version of TestEnv that is compatible with the loaded version of Julia.
+
+### See also:
+ - [Discourse Release Announcement](https://discourse.julialang.org/t/ann-testenv-jl-activate-your-test-enviroment-so-you-can-use-your-test-dependencies/65739?u=oxinabox)
