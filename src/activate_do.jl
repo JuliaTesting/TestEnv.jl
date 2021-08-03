@@ -12,7 +12,7 @@ Indeed this is basically extracted from what `Pkg.test()` does.
 function activate(f, pkg::AbstractString=current_pkg_name())
     ctx, pkgspec = ctx_and_pkgspec(pkg)    
     if test_dir_has_project_file(ctx, pkgspec)
-        sandbox(ctx, pkgspec, pkgspec.path, joinpath(pkgspec.path, "test")) do
+        sandbox(ctx, pkgspec, pkgspec.path, sandbox_mutable_dir(pkgspec)) do
             flush(stdout)
             f()
         end

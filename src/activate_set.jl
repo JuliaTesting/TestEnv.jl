@@ -12,7 +12,7 @@ function activate(pkg::AbstractString=current_pkg_name())
     ctx, pkgspec = ctx_and_pkgspec(pkg)
     if test_dir_has_project_file(ctx, pkgspec)
         local final_dir
-        sandbox(ctx, pkgspec, pkgspec.path, joinpath(pkgspec.path, "test")) do
+        sandbox(ctx, pkgspec, pkgspec.path, sandbox_mutable_dir(pkgspec)) do
             flush(stdout)
             final_dir = dirname(Base.active_project())
             cp(joinpath(final_dir, "Project.toml"), joinpath(outer_tmp, "Project.toml"))
