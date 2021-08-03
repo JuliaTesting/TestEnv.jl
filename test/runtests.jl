@@ -3,5 +3,6 @@ using TestEnv
 using Test
 
 @testset "TestEnv.jl" begin
-    include("runner.jl")
+    include("activate_do.jl")
+    include("activate_set.jl")
 end
