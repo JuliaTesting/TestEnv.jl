@@ -75,4 +75,4 @@ then the package manager is free to choose any compatible versiox `v` with `1.0.
 It will thus chose the corret minor version of TestEnv that is compatible with the loaded version of Julia.
 
 ### See also:
- - [Discourse Release Announcement](https://discourse.julialang.org/t/ann-testenv-jl-activate-your-test-enviroment-so-you-can-use-your-test-dependencies/65739?u=oxinabox)
+ - [Discourse Release Announcement](https://discourse.julialang.org/t/ann-testenv-jl-activate-your-test-enviroment-so-you-can-use-your-test-dependencies/65739)
