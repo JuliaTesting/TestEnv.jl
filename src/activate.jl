@@ -44,23 +44,12 @@ is of type `Pkg.Types.Context`. For earlier versions, they are of type
 `Pkg.Types.EnvCache`.
 """
 function isinstalled!(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
-    var = @static if v"1.4.0" <= VERSION < v"1.7.0-"
-        ctx
-    else
-        ctx.env
-    end
-    project_resolve!(var, [pkgspec])
-    project_deps_resolve!(var, [pkgspec])
-
-    manifest = @static if VERSION < v"1.7.0-"
-        var
-    else
-        var.manifest
-    end
-    manifest_resolve!(manifest, [pkgspec])
+    project_resolve!(ctx, [pkgspec])
+    project_deps_resolve!(ctx, [pkgspec])
+    manifest_resolve!(ctx, [pkgspec])
 
     try
-        ensure_resolved(manifest, [pkgspec])
+        ensure_resolved(ctx, [pkgspec])
     catch err
         err isa MethodError && rethrow()
         return false
