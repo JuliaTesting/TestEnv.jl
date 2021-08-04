@@ -1,14 +1,14 @@
+"""
+    TestEnv.activate([pkg])
 
-# Originally from Pkg.Operations.sandbox
-function make_test_env(ctx::Context, target)
-    # This needs to be first as `gen_target_project` fixes `target.path` if it is nothing
-    sandbox_project_override = if !test_dir_has_project_file(ctx, target)
-        sandbox_project_override = gen_target_project(ctx, target, target.path, "test")
-    else
-        nothing
-    end
+Activate the test enviroment of `pkg` (defaults to current enviroment).
+"""
+function activate(pkg::AbstractString=current_pkg_name())
+    ctx, pkgspec = ctx_and_pkgspec(pkg)
+    # This needs to be first as `gen_target_project` fixes `pkgspec.path` if it is nothing
+    sandbox_project_override = maybe_gen_project_override!(ctx, pkgspec)
 
-    sandbox_path = joinpath(target.path, "test")
+    sandbox_path = joinpath(pkgspec.path, "test")
     sandbox_project = projectfile_path(sandbox_path)
 
     tmp = mktempdir()
@@ -25,7 +25,7 @@ function make_test_env(ctx::Context, target)
     # create merged manifest
     # - copy over active subgraph
     # - abspath! to maintain location of all deved nodes
-    working_manifest = abspath!(ctx, sandbox_preserve(ctx, target, tmp_project))
+    working_manifest = abspath!(ctx, sandbox_preserve(ctx, pkgspec, tmp_project))
 
     # - copy over fixed subgraphs from test subgraph
     # really only need to copy over "special" nodes
@@ -52,7 +52,7 @@ function make_test_env(ctx::Context, target)
     Base.ACTIVE_PROJECT[] = nothing
 
     temp_ctx = Context()
-    temp_ctx.env.project.deps[target.name] = target.uuid
+    temp_ctx.env.project.deps[pkgspec.name] = pkgspec.uuid
 
     try
         Pkg.resolve(temp_ctx; io=devnull)
