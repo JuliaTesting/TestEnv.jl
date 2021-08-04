@@ -47,9 +47,7 @@ function activate(pkg::AbstractString=current_pkg_name())
 
     Types.write_manifest(working_manifest, tmp_manifest)
 
-    # sandbox
-    push!(empty!(LOAD_PATH), "@", tmp)
-    Base.ACTIVE_PROJECT[] = nothing
+    Base.ACTIVE_PROJECT[] = tmp_project
 
     temp_ctx = Context()
     temp_ctx.env.project.deps[pkgspec.name] = pkgspec.uuid
@@ -75,11 +73,6 @@ function activate(pkg::AbstractString=current_pkg_name())
         end
     end
     write_env(temp_ctx.env; update_undo=false)
-
-    # update enviroment variables
-    path_sep = Sys.iswindows() ? ';' : ':'
-    ENV["JULIA_LOAD_PATH"] = "@$(path_sep)$(tmp)"
-    delete!(ENV, "JULIA_PROJECT")
     
     return Base.active_project()
 end
