@@ -57,7 +57,7 @@ And we tag releases off that branch with major and minor versions matching the j
 
 **Do not make PRs against this COVER branch.**
 Except to update this README.
-Instread you probably want to PR a branch for some current version of Julia.
+Instead you probably want to PR a branch for some current version of Julia.
 
 This is a bit weird for semver.
 New features *can* be added in patch release, but they must be ported to all later branches, and patch releases must be made there also.
