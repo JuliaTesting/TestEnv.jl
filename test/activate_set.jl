@@ -39,4 +39,7 @@
             Pkg.activate(orig_project_toml_path)
         end
     end
+
+    # https://github.com/JuliaTesting/TestEnv.jl/issues/26
+    @test isdefined(TestEnv, :isfixed)
 end
