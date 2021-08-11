@@ -39,4 +39,16 @@
             Pkg.activate(orig_project_toml_path)
         end
     end
+
+    # See #26
+    @testset "KernelFunctions" begin
+        orig_project_toml_path = Base.active_project()
+        push!(LOAD_PATH, mktempdir())  # put something weird in LOAD_PATH for testing
+        orig_load_path = Base.LOAD_PATH
+        try
+            TestEnv.activate("KernelFunctions")
+        finally
+            Pkg.activate(orig_project_toml_path)
+        end
+    end
 end
