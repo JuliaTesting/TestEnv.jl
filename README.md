@@ -69,7 +69,7 @@ Older ones may be yanked if they start causing issues for people.
 If using this as a dependency of a package that supports many versions of julia you may wonder what to put in your Project.toml's [compat] section.
 Do not fear, the package manager has your back.
 If you put in your `[compat]` for `TestEnv=`: `1` or equivalently `1.0` or `1.0` or `1.0.0` or `^1`, or `^1.0` or `^1.0` or `^1.0.0`,
-then the package manager is free to choose any compatible versiox `v` with `1.0.0 <= v < 2.0.0`.
+then the package manager is free to choose any compatible version `v` with `1.0.0 <= v < 2.0.0`.
 It will thus chose the corret minor version of TestEnv that is compatible with the loaded version of Julia.
 
 ### See also:
