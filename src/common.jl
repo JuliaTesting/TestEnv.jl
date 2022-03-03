@@ -11,7 +11,7 @@ current_pkg_name() = Context().env.pkg.name
 
 """
    ctx, pkgspec = ctx_and_pkgspec(pkg::AbstractString)
-   
+
 For a given package name `pkg`, instantiate a `Context` for it, and return that `Context`,
 and it's `PackageSpec`.
 """
@@ -36,7 +36,7 @@ function isinstalled!(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
     manifest_resolve!(ctx.env.manifest, [pkgspec])
 
     try
-        ensure_resolved(ctx.env.manifest, [pkgspec])
+        ensure_resolved(ctx, ctx.env.manifest, [pkgspec])
     catch err
         err isa MethodError && rethrow()
         return false
@@ -52,7 +52,7 @@ end
 """
     get_test_dir(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
 
-Gets the testfile path of the package. Code for each Julia version mirrors that found 
+Gets the testfile path of the package. Code for each Julia version mirrors that found
 in `Pkg/src/Operations.jl`.
 """
 function get_test_dir(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
@@ -76,7 +76,7 @@ end
 
 function maybe_gen_project_override!(ctx, pkgspec)
     if !test_dir_has_project_file(ctx, pkgspec)
-        gen_target_project(ctx.env, ctx.registries, pkgspec, pkgspec.path, "test")
+        gen_target_project(ctx, pkgspec, pkgspec.path, "test")
     else
         nothing
     end
