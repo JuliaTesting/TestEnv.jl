@@ -8,6 +8,10 @@ Activate the test enviroment of `pkg` (defaults to current enviroment).
 """
 function activate(pkg::AbstractString=current_pkg_name())
     ctx, pkgspec = ctx_and_pkgspec(pkg)
+    return activate(ctx, pkgspec)
+end
+
+function activate(ctx::Context, pkgspec::PackageSpec)
     # This needs to be first as `gen_target_project` fixes `pkgspec.path` if it is nothing
     sandbox_project_override = maybe_gen_project_override!(ctx, pkgspec)
 
