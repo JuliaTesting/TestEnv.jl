@@ -8,7 +8,7 @@ end
 
 function current_pkg_name()
     ctx = Context()
-    ctx.env.pkg === nothing && throw(TestEnvError("trying to test an unnamed project"))
+    ctx.env.pkg === nothing && throw(TestEnvError("trying to activate test environment of an unnamed project"))
     return ctx.env.pkg.name
 end
 
