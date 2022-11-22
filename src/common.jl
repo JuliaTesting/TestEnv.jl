@@ -6,8 +6,11 @@ function Base.showerror(io::IO, ex::TestEnvError, bt; backtrace=true)
     printstyled(io, ex.msg, color=Base.error_color())
 end
 
-
-current_pkg_name() = Context().env.pkg.name
+function current_pkg_name()
+    ctx = Context()
+    ctx.env.pkg === nothing && throw(TestEnvError("trying to activate test environment of an unnamed project"))
+    return ctx.env.pkg.name
+end
 
 """
    ctx, pkgspec = ctx_and_pkgspec(pkg::AbstractString)
