@@ -54,6 +54,8 @@ And we tag releases off that branch with major and minor versions matching the j
  - [release-1.7](https://github.com/JuliaTesting/TestEnv.jl/tree/release-1.7) contains the code to support julia v1.7.x
  - [release-1.8](https://github.com/JuliaTesting/TestEnv.jl/tree/release-1.8) contains the code to support julia v1.8.x
  - [release-1.9](https://github.com/JuliaTesting/TestEnv.jl/tree/release-1.9) contains the code to support julia v1.9.x
+ - [release-1.10](https://github.com/JuliaTesting/TestEnv.jl/tree/release-1.10) contains the code to support julia v1.10.x
+
 
 
 **Do not make PRs against this COVER branch.**
