@@ -52,8 +52,8 @@ And we tag releases off that branch with major and minor versions matching the j
  - [release-1.4](https://github.com/JuliaTesting/TestEnv.jl/tree/release-1.4) contains the code to support julia v1.4.x, v1.5.x, and v1.6.x
     - This was a rare goldern ages where the internals of Pkg did not change for almost a year.
  - [release-1.7](https://github.com/JuliaTesting/TestEnv.jl/tree/release-1.7) contains the code to support julia v1.7.x
- - [release-1.8](https://github.com/JuliaTesting/TestEnv.jl/tree/release-1.8) contains the code to support julia v1.8.x
- - [release-1.9](https://github.com/JuliaTesting/TestEnv.jl/tree/release-1.9) contains the code to support julia v1.9.x
+ - [release-1.8](https://github.com/JuliaTesting/TestEnv.jl/tree/release-1.8) contains the code to support julia v1.8.x and v1.9.x
+    - Another period of stability when the internals of Pkg didn't change. Long may it continue.
  - [release-1.10](https://github.com/JuliaTesting/TestEnv.jl/tree/release-1.10) contains the code to support julia v1.10.x
 
 
