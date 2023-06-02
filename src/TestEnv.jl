@@ -8,7 +8,6 @@ using Pkg.Operations: project_rel_path, project_resolve!
 using Pkg.Operations: sandbox, source_path, sandbox_preserve, abspath!
 using Pkg.Operations: gen_target_project, isfixed
 
-
 include("common.jl")
 include("activate_do.jl")
 include("activate_set.jl")
