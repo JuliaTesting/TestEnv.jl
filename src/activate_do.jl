@@ -11,9 +11,9 @@ Indeed this is basically extracted from what `Pkg.test()` does.
 """
 function activate(f, pkg::AbstractString=current_pkg_name())
     ctx, pkgspec = ctx_and_pkgspec(pkg)
-    
-    test_project_override = maybe_gen_project_override!(ctx, pkgspec) 
-    return sandbox(ctx, pkgspec, pkgspec.path, joinpath(pkgspec.path, "test"), test_project_override) do
+    test_project_override = maybe_gen_project_override!(ctx, pkgspec)
+    path = pkgspec.path::String
+    return sandbox(ctx, pkgspec, path, joinpath(path, "test"), test_project_override) do
         flush(stdout)
         f()
     end
