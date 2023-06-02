@@ -5,6 +5,7 @@
             @eval using FiniteDifferences
         end
         @test isdefined(@__MODULE__, :FiniteDifferences)
+        
         @test Base.active_project() == orig_project
     end
 end
