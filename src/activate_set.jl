@@ -30,4 +30,3 @@ function activate(pkg::AbstractString=current_pkg_name())
         Pkg.activate(outer_tmp)
     end
 end
-
