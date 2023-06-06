@@ -15,7 +15,7 @@ end
 
 """
    ctx, pkgspec = ctx_and_pkgspec(pkg::AbstractString)
-   
+
 For a given package name `pkg`, instantiate a `Context` for it, and return that `Context`,
 and it's `PackageSpec`.
 """
@@ -50,13 +50,15 @@ end
 
 
 function test_dir_has_project_file(ctx, pkgspec)
-    return isfile(joinpath(get_test_dir(ctx, pkgspec), "Project.toml"))
+    test_dir = get_test_dir(ctx, pkgspec)
+    test_dir === nothing && return false
+    return isfile(joinpath(test_dir, "Project.toml"))
 end
 
 """
     get_test_dir(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
 
-Gets the testfile path of the package. Code for each Julia version mirrors that found 
+Gets the testfile path of the package. Code for each Julia version mirrors that found
 in `Pkg/src/Operations.jl`.
 """
 function get_test_dir(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
@@ -68,6 +70,6 @@ function get_test_dir(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
         update_package_test!(pkgspec, manifest_info(ctx.env, pkgspec.uuid))
         pkgspec.path = joinpath(project_rel_path(ctx, source_path(pkgspec)))
     end
-    pkgfilepath = project_rel_path(ctx, source_path(pkgspec))
+    pkgfilepath = project_rel_path(ctx, source_path(pkgspec))::String
     return joinpath(pkgfilepath, "test")
 end
