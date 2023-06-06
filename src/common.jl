@@ -15,7 +15,7 @@ end
 
 """
    ctx, pkgspec = ctx_and_pkgspec(pkg::AbstractString)
-   
+
 For a given package name `pkg`, instantiate a `Context` for it, and return that `Context`,
 and it's `PackageSpec`.
 """
@@ -27,17 +27,12 @@ function ctx_and_pkgspec(pkg::AbstractString)
     return ctx, pkgspec
 end
 
-
 """
     isinstalled!(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
 
 Checks if the package is installed by using `ensure_resolved` from `Pkg/src/Types.jl`.
 This function fails if the package is not installed, but here we wrap it in a
 try-catch as we may want to test another package after the one that isn't installed.
-
-For Julia versions V1.4 and later, the first arguments of the Pkg functions used
-is of type `Pkg.Types.Context`. For earlier versions, they are of type
-`Pkg.Types.EnvCache`.
 """
 function isinstalled!(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
     project_resolve!(ctx, [pkgspec])
@@ -53,14 +48,17 @@ function isinstalled!(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
     return true
 end
 
+
 function test_dir_has_project_file(ctx, pkgspec)
-    return isfile(joinpath(get_test_dir(ctx, pkgspec), "Project.toml"))
+    test_dir = get_test_dir(ctx, pkgspec)
+    test_dir === nothing && return false
+    return isfile(joinpath(test_dir, "Project.toml"))
 end
 
 """
     get_test_dir(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
 
-Gets the testfile path of the package. Code for each Julia version mirrors that found 
+Gets the testfile path of the package. Code for each Julia version mirrors that found
 in `Pkg/src/Operations.jl`.
 """
 function get_test_dir(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
@@ -71,14 +69,14 @@ function get_test_dir(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
         update_package_test!(pkgspec, manifest_info(ctx, pkgspec.uuid))
         pkgspec.path = project_rel_path(ctx, source_path(ctx, pkgspec))
     end
-    pkgfilepath = source_path(ctx, pkgspec)
+    pkgfilepath = source_path(ctx, pkgspec)::String
     return joinpath(pkgfilepath, "test")
 end
 
 
 function maybe_gen_project_override!(ctx, pkgspec)
     if !test_dir_has_project_file(ctx, pkgspec)
-        sandbox_project_override = gen_target_project(ctx, pkgspec, pkgspec.path, "test")
+        gen_target_project(ctx, pkgspec, pkgspec.path::String, "test")
     else
         nothing
     end
