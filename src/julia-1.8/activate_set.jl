@@ -11,7 +11,7 @@ function activate(pkg::AbstractString=current_pkg_name())
     # This needs to be first as `gen_target_project` fixes `pkgspec.path` if it is nothing
     sandbox_project_override = maybe_gen_project_override!(ctx, pkgspec)
 
-    sandbox_path = joinpath(pkgspec.path, "test")
+    sandbox_path = joinpath(pkgspec.path::String, "test")
     sandbox_project = projectfile_path(sandbox_path)
 
     tmp = mktempdir()
@@ -71,7 +71,7 @@ function activate(pkg::AbstractString=current_pkg_name())
     # Absolutify stdlibs paths
     for (uuid, entry) in temp_ctx.env.manifest
         if is_stdlib(uuid)
-            entry.path = Types.stdlib_path(entry.name)
+            entry.path = Types.stdlib_path(entry.name::String)
         end
     end
     write_env(temp_ctx.env; update_undo=false)
