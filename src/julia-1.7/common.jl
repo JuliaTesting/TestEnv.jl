@@ -6,8 +6,11 @@ function Base.showerror(io::IO, ex::TestEnvError, bt; backtrace=true)
     printstyled(io, ex.msg, color=Base.error_color())
 end
 
-
-current_pkg_name() = Context().env.pkg.name
+function current_pkg_name()
+    ctx = Context()
+    ctx.env.pkg === nothing && throw(TestEnvError("trying to activate test environment of an unnamed project"))
+    return ctx.env.pkg.name
+end
 
 """
    ctx, pkgspec = ctx_and_pkgspec(pkg::AbstractString)
@@ -46,7 +49,9 @@ end
 
 
 function test_dir_has_project_file(ctx, pkgspec)
-    return isfile(joinpath(get_test_dir(ctx, pkgspec), "Project.toml"))
+    test_dir = get_test_dir(ctx, pkgspec)
+    test_dir === nothing && return false
+    return isfile(joinpath(test_dir, "Project.toml"))
 end
 
 """
@@ -60,23 +65,23 @@ function get_test_dir(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
         pkgspec.path = dirname(ctx.env.project_file)
         pkgspec.version = ctx.env.pkg.version
     else
-        is_stdlib(pkgspec.uuid) && return
+        is_stdlib(pkgspec.uuid::Base.UUID) && return
         entry = manifest_info(ctx.env.manifest, pkgspec.uuid)
         pkgspec.version = entry.version
         pkgspec.tree_hash = entry.tree_hash
         pkgspec.repo = entry.repo
         pkgspec.path = entry.path
         pkgspec.pinned = entry.pinned
-        pkgspec.path = project_rel_path(ctx.env, source_path(ctx.env.project_file, pkgspec))
+        pkgspec.path = project_rel_path(ctx.env, source_path(ctx.env.project_file, pkgspec)::String)
     end
-    pkgfilepath = source_path(ctx.env.project_file, pkgspec)
+    pkgfilepath = source_path(ctx.env.project_file, pkgspec)::String
     return joinpath(pkgfilepath, "test")
 end
 
 
 function maybe_gen_project_override!(ctx, pkgspec)
     if !test_dir_has_project_file(ctx, pkgspec)
-        gen_target_project(ctx.env, ctx.registries, pkgspec, pkgspec.path, "test")
+        gen_target_project(ctx.env, ctx.registries, pkgspec, pkgspec.path::String, "test")
     else
         nothing
     end
