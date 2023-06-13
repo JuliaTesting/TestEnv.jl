@@ -7,7 +7,11 @@ function Base.showerror(io::IO, ex::TestEnvError, bt; backtrace=true)
 end
 
 
-current_pkg_name() = Context().env.pkg.name
+function current_pkg_name()
+    ctx = Context()
+    ctx.env.pkg === nothing && throw(TestEnvError("trying to activate test environment of an unnamed project"))
+    return ctx.env.pkg.name
+end
 
 """
    ctx, pkgspec = ctx_and_pkgspec(pkg::AbstractString)
@@ -44,7 +48,9 @@ function isinstalled!(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
 end
 
 function test_dir_has_project_file(ctx, pkgspec)
-    return isfile(joinpath(get_test_dir(ctx, pkgspec), "Project.toml"))
+    test_dir = get_test_dir(ctx, pkgspec)
+    test_dir === nothing && return false
+    return isfile(joinpath(test_dir, "Project.toml"))
 end
 
 """
@@ -56,9 +62,9 @@ in `Pkg/src/Operations.jl`.
 function get_test_dir(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
     pkgspec.special_action = Pkg.Types.PKGSPEC_TESTED
     if is_project_uuid(ctx.env, pkgspec.uuid)
-        pkgspec.version = ctx.env.pkg.version
         pkgfilepath = dirname(ctx.env.project_file)
-    else        
+        pkgspec.version = ctx.env.pkg.version
+    else
         info = manifest_info(ctx.env, pkgspec.uuid)
         if haskey(info, "git-tree-sha1")
             pkgfilepath = find_installed(pkgspec.name, pkgspec.uuid, SHA1(info["git-tree-sha1"]))

@@ -7,7 +7,11 @@ function Base.showerror(io::IO, ex::TestEnvError, bt; backtrace=true)
 end
 
 
-current_pkg_name() = Context().env.pkg.name
+function current_pkg_name()
+    ctx = Context()
+    ctx.env.pkg === nothing && throw(TestEnvError("trying to activate test environment of an unnamed project"))
+    return ctx.env.pkg.name
+end
 
 """
    ctx, pkgspec = ctx_and_pkgspec(pkg::AbstractString)
@@ -46,7 +50,9 @@ end
 
 
 function test_dir_has_project_file(ctx, pkgspec)
-    return isfile(joinpath(get_test_dir(ctx, pkgspec), "Project.toml"))
+    test_dir = get_test_dir(ctx, pkgspec)
+    test_dir === nothing && return false
+    return isfile(joinpath(test_dir, "Project.toml"))
 end
 
 """
@@ -64,6 +70,6 @@ function get_test_dir(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
         update_package_test!(pkgspec, manifest_info(ctx.env, pkgspec.uuid))
         pkgspec.path = joinpath(project_rel_path(ctx, source_path(pkgspec)))
     end
-    pkgfilepath = project_rel_path(ctx, source_path(pkgspec))
+    pkgfilepath = project_rel_path(ctx, source_path(pkgspec))::String
     return joinpath(pkgfilepath, "test")
 end

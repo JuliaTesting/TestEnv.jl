@@ -8,7 +8,7 @@ function activate(pkg::AbstractString=current_pkg_name())
     # This needs to be first as `gen_target_project` fixes `pkgspec.path` if it is nothing
     sandbox_project_override = maybe_gen_project_override!(ctx, pkgspec)
 
-    sandbox_path = joinpath(pkgspec.path, "test")
+    sandbox_path = joinpath(pkgspec.path::String, "test")
     sandbox_project = projectfile_path(sandbox_path)
 
     tmp = mktempdir()
@@ -35,10 +35,10 @@ function activate(pkg::AbstractString=current_pkg_name())
     for (name, uuid) in sandbox_env.project.deps
         entry = get(sandbox_manifest, uuid, nothing)
         if entry !== nothing && isfixed(entry)
-            subgraph = prune_manifest(sandbox_manifest, [uuid])
+            subgraph = Pkg.Operations.prune_manifest(sandbox_manifest, [uuid])
             for (uuid, entry) in subgraph
                 if haskey(working_manifest, uuid)
-                    pkgerror("can not merge projects")
+                    Pkg.Operations.pkgerror("can not merge projects")
                 end
                 working_manifest[uuid] = entry
             end
@@ -69,7 +69,7 @@ function activate(pkg::AbstractString=current_pkg_name())
     # Absolutify stdlibs paths
     for (uuid, entry) in temp_ctx.env.manifest
         if is_stdlib(uuid)
-            entry.path = Types.stdlib_path(entry.name)
+            entry.path = Types.stdlib_path(entry.name::String)
         end
     end
     write_env(temp_ctx.env; update_undo=false)
