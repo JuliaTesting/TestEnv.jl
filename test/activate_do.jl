@@ -6,10 +6,12 @@
 
             orig_project = Base.active_project()
 
-            direct_deps() = [v.name for (_,v) in Pkg.dependencies() if v.is_direct_dep]
-            crc_deps = TestEnv.activate(direct_deps, "ChainRulesCore")
-            @test "ChainRulesCore" ∈ crc_deps
-            @test "FiniteDifferences" ∈ crc_deps
+            if VERSION >= v"1.4"
+                direct_deps() = [v.name for (_,v) in Pkg.dependencies() if v.is_direct_dep]
+                crc_deps = TestEnv.activate(direct_deps, "ChainRulesCore")
+                @test "ChainRulesCore" ∈ crc_deps
+                @test "FiniteDifferences" ∈ crc_deps
+            end
 
             TestEnv.activate("ChainRulesCore") do
                 @eval using FiniteDifferences
@@ -23,17 +25,32 @@
     @testset "activate do test/Project" begin
         mktempdir() do p
             Pkg.activate(p)
-            Pkg.add(PackageSpec(name="MCMCDiagnosticTools", version="0.1.0"))
 
-            orig_project = Base.active_project()
+            if VERSION >= v"1.4"
+                Pkg.add(PackageSpec(name="MCMCDiagnosticTools", version="0.1.0"))
 
-            # MCMCDiagnosticTools has a test/Project.toml, which contains FFTW
-            TestEnv.activate("MCMCDiagnosticTools") do
-                @eval using FFTW
-            end
-            @test isdefined(@__MODULE__, :FFTW)
-            
-            @test Base.active_project() == orig_project
+                orig_project = Base.active_project()
+
+                # MCMCDiagnosticTools has a test/Project.toml, which contains FFTW
+                TestEnv.activate("MCMCDiagnosticTools") do
+                    @eval using FFTW
+                end
+                @test isdefined(@__MODULE__, :FFTW)
+                
+                @test Base.active_project() == orig_project
+            else
+                Pkg.add(PackageSpec(name="ConstraintSolver", version="0.6.10"))
+
+                orig_project = Base.active_project()
+
+                # ConstraintSolver has a test/Project.toml, which contains Combinatorics
+                TestEnv.activate("ConstraintSolver") do
+                    @eval using Combinatorics
+                end
+                @test isdefined(@__MODULE__, :Combinatorics)
+                
+                @test Base.active_project() == orig_project
+            end            
         end
     end
 end

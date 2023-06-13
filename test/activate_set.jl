@@ -29,23 +29,45 @@
     @testset "activate test/Project" begin
         mktempdir() do p
             Pkg.activate(p)
-            Pkg.add(PackageSpec(name="YAXArrays", version="0.1.3"))
 
-            orig_project_toml_path = Base.active_project()
-            push!(LOAD_PATH, mktempdir())  # put something weird in LOAD_PATH for testing
-            orig_load_path = Base.LOAD_PATH
-            try
-                # YAXArrays has a test/Project.toml, which contains CSV
-                TestEnv.activate("YAXArrays")
-                new_project_toml_path = Base.active_project()
-                @test new_project_toml_path != orig_project_toml_path
-                @test orig_load_path == Base.LOAD_PATH
+            if VERSION >= v"1.4"
+                Pkg.add(PackageSpec(name="YAXArrays", version="0.1.3"))
 
-                @eval using CSV
-                @test isdefined(@__MODULE__, :CSV)
+                orig_project_toml_path = Base.active_project()
+                push!(LOAD_PATH, mktempdir())  # put something weird in LOAD_PATH for testing
+                orig_load_path = Base.LOAD_PATH
+                try
+                    # YAXArrays has a test/Project.toml, which contains CSV
+                    TestEnv.activate("YAXArrays")
+                    new_project_toml_path = Base.active_project()
+                    @test new_project_toml_path != orig_project_toml_path
+                    @test orig_load_path == Base.LOAD_PATH
 
-            finally
-                Pkg.activate(orig_project_toml_path)
+                    @eval using CSV
+                    @test isdefined(@__MODULE__, :CSV)
+
+                finally
+                    Pkg.activate(orig_project_toml_path)
+                end
+            else
+                Pkg.add(PackageSpec(name="ConstraintSolver", version="0.6.10"))
+
+                orig_project_toml_path = Base.active_project()
+                push!(LOAD_PATH, mktempdir())  # put something weird in LOAD_PATH for testing
+                orig_load_path = Base.LOAD_PATH
+                try
+                    # ConstraintSolver has a test/Project.toml, which contains CSV
+                    TestEnv.activate("ConstraintSolver")
+                    new_project_toml_path = Base.active_project()
+                    @test new_project_toml_path != orig_project_toml_path
+                    @test orig_load_path == Base.LOAD_PATH
+
+                    @eval using JSON
+                    @test isdefined(@__MODULE__, :JSON)
+
+                finally
+                    Pkg.activate(orig_project_toml_path)
+                end
             end
         end
 
