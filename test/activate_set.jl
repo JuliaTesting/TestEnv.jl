@@ -49,7 +49,7 @@
                 finally
                     Pkg.activate(orig_project_toml_path)
                 end
-            else
+            elseif VERSION >= v"1.2"
                 Pkg.add(PackageSpec(name="ConstraintSolver", version="0.6.10"))
 
                 orig_project_toml_path = Base.active_project()
@@ -71,7 +71,9 @@
             end
         end
 
-        # https://github.com/JuliaTesting/TestEnv.jl/issues/26
-        @test isdefined(TestEnv, :isfixed)
+        if VERSION >= v"1.4"
+            # https://github.com/JuliaTesting/TestEnv.jl/issues/26
+            @test isdefined(TestEnv, :isfixed)
+        end
     end
 end

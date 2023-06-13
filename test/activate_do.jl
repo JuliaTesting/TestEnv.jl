@@ -38,7 +38,7 @@
                 @test isdefined(@__MODULE__, :FFTW)
                 
                 @test Base.active_project() == orig_project
-            else
+            elseif VERSION >= v"1.2"
                 Pkg.add(PackageSpec(name="ConstraintSolver", version="0.6.10"))
 
                 orig_project = Base.active_project()
