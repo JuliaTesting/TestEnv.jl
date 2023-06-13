@@ -20,7 +20,7 @@
             
             # We use endswith here because on MacOS GitHub runners for some reasons the paths are slightly different
             # We also skip on Julia 1.2 and 1.3 on Windows because it is using 8 character shortened paths in one case
-            if !((VERSION==v"1.2" || VERSION==v"1.3") && Sys.iswindows())
+            if !((v"1.2" <= VERSION < v"1.4") && Sys.iswindows())
                 @test endswith(Base.active_project(), orig_project)
             end
         end
