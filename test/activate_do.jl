@@ -2,7 +2,7 @@
     @testset "activate do f [extras]" begin
         mktempdir() do p
             Pkg.activate(p)
-            Pkg.add(name="ChainRulesCore", version="1.0.2")
+            Pkg.add(PackageSpec(name="ChainRulesCore", version="1.0.2"))
 
             orig_project = Base.active_project()
 
@@ -23,7 +23,7 @@
     @testset "activate do test/Project" begin
         mktempdir() do p
             Pkg.activate(p)
-            Pkg.add(name="MCMCDiagnosticTools", version="0.1.0")
+            Pkg.add(PackageSpec(name="MCMCDiagnosticTools", version="0.1.0"))
 
             orig_project = Base.active_project()
 

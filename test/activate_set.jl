@@ -2,7 +2,7 @@
     @testset "activate [extras]" begin
         mktempdir() do p
             Pkg.activate(p)
-            Pkg.add(name="ChainRulesCore", version="1.0.2")
+            Pkg.add(PackageSpec(name="ChainRulesCore", version="1.0.2"))
 
             orig_project_toml_path = Base.active_project()
             push!(LOAD_PATH, mktempdir())  # put something weird in LOAD_PATH for testing
@@ -29,7 +29,7 @@
     @testset "activate test/Project" begin
         mktempdir() do p
             Pkg.activate(p)
-            Pkg.add(name="YAXArrays", version="0.1.3")
+            Pkg.add(PackageSpec(name="YAXArrays", version="0.1.3"))
 
             orig_project_toml_path = Base.active_project()
             push!(LOAD_PATH, mktempdir())  # put something weird in LOAD_PATH for testing
