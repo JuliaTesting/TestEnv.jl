@@ -18,7 +18,8 @@
             end
             @test isdefined(@__MODULE__, :FiniteDifferences)
             
-            @test Base.active_project() == orig_project
+            # We use endswith here because on MacOS GitHub runners for some reasons the paths are slightly different
+            @test endswith(Base.active_project(), orig_project)
         end
     end
 
@@ -37,7 +38,8 @@
                 end
                 @test isdefined(@__MODULE__, :FFTW)
                 
-                @test Base.active_project() == orig_project
+                # We use endswith here because on MacOS GitHub runners for some reasons the paths are slightly different
+                @test endswith(Base.active_project(), orig_project)
             elseif VERSION >= v"1.2"
                 Pkg.add(PackageSpec(name="ConstraintSolver", version="0.6.10"))
 
@@ -49,7 +51,8 @@
                 end
                 @test isdefined(@__MODULE__, :Combinatorics)
                 
-                @test Base.active_project() == orig_project
+                # We use endswith here because on MacOS GitHub runners for some reasons the paths are slightly different
+                @test endswith(Base.active_project(), orig_project)
             end            
         end
     end
