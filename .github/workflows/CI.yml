@@ -22,8 +22,14 @@ jobs:
           - '1.9'
         os:
           - ubuntu-latest
+          - windows-latest
+          - macOS-latest
         arch:
           - x64
+          - x86
+        exclude:
+          - os: macOS-latest
+            arch: x86
     steps:
       - uses: actions/checkout@v3
       - uses: julia-actions/setup-julia@v1
