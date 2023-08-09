@@ -30,7 +30,7 @@
         mktempdir() do p
             Pkg.activate(p)
 
-            if VERSION >= v"1.4"
+            if VERSION >= v"1.4-"
                 Pkg.add(PackageSpec(name="YAXArrays", version="0.1.3"))
 
                 orig_project_toml_path = Base.active_project()
@@ -49,7 +49,7 @@
                 finally
                     Pkg.activate(orig_project_toml_path)
                 end
-            elseif VERSION >= v"1.2"
+            elseif VERSION >= v"1.2-"
                 Pkg.add(PackageSpec(name="ConstraintSolver", version="0.6.10"))
 
                 orig_project_toml_path = Base.active_project()
@@ -71,7 +71,7 @@
             end
         end
 
-        if VERSION >= v"1.4"
+        if VERSION >= v"1.4-"
             # https://github.com/JuliaTesting/TestEnv.jl/issues/26
             @test isdefined(TestEnv, :isfixed)
         end

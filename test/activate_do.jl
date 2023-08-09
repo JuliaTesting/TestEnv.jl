@@ -6,7 +6,7 @@
 
             orig_project = Base.active_project()
 
-            if VERSION >= v"1.4"
+            if VERSION >= v"1.4-"
                 direct_deps() = [v.name for (_,v) in Pkg.dependencies() if v.is_direct_dep]
                 crc_deps = TestEnv.activate(direct_deps, "ChainRulesCore")
                 @test "ChainRulesCore" ∈ crc_deps
@@ -20,7 +20,7 @@
             
             # We use endswith here because on MacOS GitHub runners for some reasons the paths are slightly different
             # We also skip on Julia 1.2 and 1.3 on Windows because it is using 8 character shortened paths in one case
-            if !((v"1.2" <= VERSION < v"1.4") && Sys.iswindows())
+            if !((v"1.2-" <= VERSION < v"1.4-") && Sys.iswindows())
                 @test endswith(Base.active_project(), orig_project)
             end
         end
@@ -30,7 +30,7 @@
         mktempdir() do p
             Pkg.activate(p)
 
-            if VERSION >= v"1.4"
+            if VERSION >= v"1.4-"
                 Pkg.add(PackageSpec(name="MCMCDiagnosticTools", version="0.1.0"))
 
                 orig_project = Base.active_project()
@@ -42,7 +42,7 @@
                 @test isdefined(@__MODULE__, :FFTW)
                 
                 @test endswith(Base.active_project(), orig_project)
-            elseif VERSION >= v"1.2"
+            elseif VERSION >= v"1.2-"
                 Pkg.add(PackageSpec(name="ConstraintSolver", version="0.6.10"))
 
                 orig_project = Base.active_project()
