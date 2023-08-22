@@ -8,14 +8,17 @@ This is a 1-function package: `TestEnv.activate`.
 It lets you activate the test environment from a given package.
 Why is this useful?
 
+This lets you run code in the test enviroment, interactively; giving you access to all your test-only dependencies.
 When you run `]test` in the REPL, a new Julia process is started which activates a temporary environment containing the tested package together with all its test-only dependencies.
-These can be either defined in the `[extras]` section in the package's `Project.toml` or in a separate `Project.toml` in the `test` folder.
-The special temporary environment is different than the plain package environment (which doesn't contain the extra test dependencies) or the test environment (which doesn't contain the package itself).
-
+These can be either defined in the `[extras]` section in the package's `Project.toml` or in a separate `test/Project.toml`.
+The special temporary environment is different than the plain package environment (which doesn't contain the extra test dependencies) or the `test/Project.toml` environment (which doesn't contain the package itself, and may not exist).
 Once the tests finish, the extra Julia process is closed and the temporary environment is deleted.
 You are not able to manually run any other code in it, which would be useful for test writing and debugging.
 Julia does not offer an official mechanism to activate such an environment outside of `]test`.
 That's what `TestEnv.activate()` is for.
+
+## Note on installation:
+Like other developer focused tools, TestEnv.jl should not be added as a dependency of the package you are developing, but rather added to your global enviroment, so it is always available.
 
 ## Example
 
