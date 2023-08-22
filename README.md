@@ -6,7 +6,8 @@
 
 This is a 1-function package: `TestEnv.activate`.
 It lets you activate the test environment from a given package.
-Why is this useful?
+
+### Why is this useful?
 
 This lets you run code in the test enviroment, interactively; giving you access to all your test-only dependencies.
 When you run `]test` in the REPL, a new Julia process is started which activates a temporary environment containing the tested package together with all its test-only dependencies.
