@@ -19,6 +19,8 @@ That's what `TestEnv.activate()` is for.
 
 ## Note on installation:
 Like other developer focused tools, TestEnv.jl should not be added as a dependency of the package you are developing, but rather added to your global enviroment, so it is always available.
+The easiest way to install it to the global enviroment is to start julia (without passing the `--project` argument), and then run `] add TestEnv`.
+
 
 ## Example
 
