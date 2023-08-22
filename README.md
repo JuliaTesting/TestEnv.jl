@@ -5,12 +5,25 @@
 
 
 This is a 1-function package: `TestEnv.activate`.
-It lets you activate the test enviroment from a given package.
-Just like `Pkg.activate` lets you activate it's main enviroment.
+It lets you activate the test environment from a given package.
+Why is this useful?
 
+When you run `]test` in the REPL, a new Julia process is started which activates a temporary environment containing the tested package together with all its test-only dependencies.
+These can be either defined in the `[extras]` section in the package's `Project.toml` or in a separate `Project.toml` in the `test` folder.
+The special temporary environment is different than the plain package environment (which doesn't contain the extra test dependencies) or the test environment (which doesn't contain the package itself).
 
-Consider for example **ChainRules.jl** has as a test-only dependency of **ChainRulesTestUtils.jl**,
-not a main dependency
+Once the tests finish, the extra Julia process is closed and the temporary environment is deleted.
+You are not able to manually run any other code in it, which would be useful for test writing and debugging.
+Julia does not offer an official mechanism to activate such an environment outside of `]test`.
+That's what `TestEnv.activate()` is for.
+
+## Example
+
+Consider **ChainRules.jl** which has a test-only dependency of **ChainRulesTestUtils.jl**,
+not a main dependency.
+
+(Note that you can install `TestEnv` in your global environment as it has no dependencies other than `Pkg`.
+This way you can load it from anywhere, instead of having to add it to package environments.)
 
 ```julia
 pkg> activate ~/.julia/dev/ChainRules
