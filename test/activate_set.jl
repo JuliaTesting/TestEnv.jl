@@ -38,7 +38,12 @@
                 orig_load_path = Base.LOAD_PATH
                 try
                     # YAXArrays has a test/Project.toml, which contains CSV
-                    TestEnv.activate("YAXArrays"; allow_reresolve=false)
+                    if VERSION >= v"1.8-"
+                        kw = (; allow_reresolve=false)
+                    else
+                        kw = NamedTuple()
+                    end
+                    TestEnv.activate("YAXArrays"; kw...)
                     new_project_toml_path = Base.active_project()
                     @test new_project_toml_path != orig_project_toml_path
                     @test orig_load_path == Base.LOAD_PATH
@@ -57,7 +62,12 @@
                 orig_load_path = Base.LOAD_PATH
                 try
                     # ConstraintSolver has a test/Project.toml, which contains CSV
-                    TestEnv.activate("ConstraintSolver"; allow_reresolve=false)
+                    if VERSION >= v"1.8-"
+                        kw = (; allow_reresolve=false)
+                    else
+                        kw = NamedTuple()
+                    end
+                    TestEnv.activate("ConstraintSolver"; kw...)
                     new_project_toml_path = Base.active_project()
                     @test new_project_toml_path != orig_project_toml_path
                     @test orig_load_path == Base.LOAD_PATH

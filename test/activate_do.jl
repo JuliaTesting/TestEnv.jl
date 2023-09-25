@@ -36,7 +36,12 @@
                 orig_project = Base.active_project()
 
                 # MCMCDiagnosticTools has a test/Project.toml, which contains FFTW
-                TestEnv.activate("MCMCDiagnosticTools"; allow_reresolve=false) do
+                if VERSION >= v"1.8-"
+                    kw = (; allow_reresolve=false)
+                else
+                    kw = NamedTuple()
+                end
+                TestEnv.activate("MCMCDiagnosticTools"; kw...) do
                     @eval using FFTW
                 end
                 @test isdefined(@__MODULE__, :FFTW)
