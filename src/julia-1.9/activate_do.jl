@@ -1,5 +1,5 @@
 """
-    TestEnv.activate(f, [pkg])
+    TestEnv.activate(f, [pkg]; allow_reresolve=true)
 
 Activate the test enviroment of `pkg` (defaults to current enviroment), and run `f()`,
 then deactivate the enviroment.
@@ -9,12 +9,12 @@ However, this *is* useful for anyone doing something like making a alternative t
 `Pkg.test()`.
 Indeed this is basically extracted from what `Pkg.test()` does.
 """
-function activate(f, pkg::AbstractString=current_pkg_name())
+function activate(f, pkg::AbstractString=current_pkg_name(); allow_reresolve=true)
     ctx, pkgspec = ctx_and_pkgspec(pkg)
-    
+
     test_project_override = maybe_gen_project_override!(ctx, pkgspec)
     path = pkgspec.path::String
-    return sandbox(ctx, pkgspec, path, joinpath(path, "test"), test_project_override) do
+    return sandbox(ctx, pkgspec, path, joinpath(path, "test"), test_project_override; allow_reresolve) do
         flush(stdout)
         f()
     end

@@ -2,11 +2,11 @@
 # Originally from Pkg.Operations.sandbox
 
 """
-    TestEnv.activate([pkg])
+    TestEnv.activate([pkg]; allow_reresolve=true)
 
 Activate the test enviroment of `pkg` (defaults to current enviroment).
 """
-function activate(pkg::AbstractString=current_pkg_name())
+function activate(pkg::AbstractString=current_pkg_name(); allow_reresolve=true)
     ctx, pkgspec = ctx_and_pkgspec(pkg)
     # This needs to be first as `gen_target_project` fixes `pkgspec.path` if it is nothing
     sandbox_project_override = maybe_gen_project_override!(ctx, pkgspec)
@@ -19,7 +19,7 @@ function activate(pkg::AbstractString=current_pkg_name())
     tmp_manifest = manifestfile_path(tmp)
 
     # Copy env info over to temp env
-    if sandbox_project_override !== nothing 
+    if sandbox_project_override !== nothing
         Types.write_project(sandbox_project_override, tmp_project)
     elseif isfile(sandbox_project)
         cp(sandbox_project, tmp_project)
@@ -58,6 +58,7 @@ function activate(pkg::AbstractString=current_pkg_name())
         Pkg.resolve(temp_ctx; io=devnull)
         @debug "Using _parent_ dep graph"
     catch err# TODO
+        allow_reresolve || rethrow()
         @debug err
         @warn "Could not use exact versions of packages in manifest, re-resolving"
         temp_ctx.env.manifest.deps = Dict(
@@ -75,6 +76,6 @@ function activate(pkg::AbstractString=current_pkg_name())
         end
     end
     write_env(temp_ctx.env; update_undo=false)
-    
+
     return Base.active_project()
 end
