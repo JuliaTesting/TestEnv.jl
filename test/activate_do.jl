@@ -17,7 +17,7 @@
                 @eval using FiniteDifferences
             end
             @test isdefined(@__MODULE__, :FiniteDifferences)
-            
+
             # We use endswith here because on MacOS GitHub runners for some reasons the paths are slightly different
             # We also skip on Julia 1.2 and 1.3 on Windows because it is using 8 character shortened paths in one case
             if !((v"1.2-" <= VERSION < v"1.4-") && Sys.iswindows())
@@ -36,11 +36,16 @@
                 orig_project = Base.active_project()
 
                 # MCMCDiagnosticTools has a test/Project.toml, which contains FFTW
-                TestEnv.activate("MCMCDiagnosticTools") do
+                if VERSION >= v"1.8-"
+                    kw = (; allow_reresolve=false)
+                else
+                    kw = NamedTuple()
+                end
+                TestEnv.activate("MCMCDiagnosticTools"; kw...) do
                     @eval using FFTW
                 end
                 @test isdefined(@__MODULE__, :FFTW)
-                
+
                 @test endswith(Base.active_project(), orig_project)
             elseif VERSION >= v"1.2-"
                 Pkg.add(PackageSpec(name="ConstraintSolver", version="0.6.10"))
@@ -52,13 +57,13 @@
                     @eval using Combinatorics
                 end
                 @test isdefined(@__MODULE__, :Combinatorics)
-                
+
                 # We use endswith here because on MacOS GitHub runners for some reasons the paths are slightly different
                 # We also skip on Windows because it is using 8 character shortened paths in one case
                 if !Sys.iswindows()
                     @test endswith(Base.active_project(), orig_project)
                 end
-            end            
+            end
         end
     end
 end
