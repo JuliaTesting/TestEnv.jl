@@ -69,12 +69,6 @@ function activate(pkg::AbstractString=current_pkg_name(); allow_reresolve=true)
         @debug "Using _clean_ dep graph"
     end
 
-    # Absolutify stdlibs paths
-    for (uuid, entry) in temp_ctx.env.manifest
-        if is_stdlib(uuid)
-            entry.path = Types.stdlib_path(entry.name::String)
-        end
-    end
     write_env(temp_ctx.env; update_undo=false)
 
     return Base.active_project()
