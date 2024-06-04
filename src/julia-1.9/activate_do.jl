@@ -14,15 +14,8 @@ function activate(f, pkg::AbstractString=current_pkg_name(); allow_reresolve=tru
 
     test_project_override = maybe_gen_project_override!(ctx, pkgspec)
     path = pkgspec.path::String
-    @static if VERSION < v"1.11-"
-        return sandbox(ctx, pkgspec, path, joinpath(path, "test"), test_project_override; allow_reresolve) do
-            flush(stdout)
-            f()
-        end
-    else
-        return sandbox(ctx, pkgspec, joinpath(path, "test"), test_project_override; allow_reresolve) do
-            flush(stdout)
-            f()
-        end
+    return sandbox(ctx, pkgspec, path, joinpath(path, "test"), test_project_override; allow_reresolve) do
+        flush(stdout)
+        f()
     end
 end
