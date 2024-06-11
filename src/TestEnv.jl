@@ -14,8 +14,10 @@ elseif VERSION < v"1.8-"
     include("julia-1.7/TestEnv.jl")
 elseif VERSION < v"1.9-"
     include("julia-1.8/TestEnv.jl")
-else
+elseif VERSION < v"1.11-"
     include("julia-1.9/TestEnv.jl")
+else
+    include("julia-1.11/TestEnv.jl")
 end
 
 end
