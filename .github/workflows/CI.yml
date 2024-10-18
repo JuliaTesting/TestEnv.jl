@@ -1,7 +1,9 @@
 name: CI
 on:
-  - push
-  - pull_request
+  push:
+    branches: [main, master]
+    tags: ["*"]
+  pull_request:
 jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
@@ -21,7 +23,8 @@ jobs:
           - '1.8'
           - '1.9'
           - '1.10'
-          - '^1.11.0-beta2'
+          - '1.11'
+          - 'nightly'
         os:
           - ubuntu-latest
           - windows-latest
