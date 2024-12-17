@@ -86,4 +86,24 @@
             @test isdefined(TestEnv, :isfixed)
         end
     end
+
+    if VERSION >= v"1.11"
+        @testset "activate with [sources]" begin
+            orig_project_toml_path = Base.active_project()
+            push!(LOAD_PATH, mktempdir())  # put something weird in LOAD_PATH for testing
+            orig_load_path = Base.LOAD_PATH
+            try
+                Pkg.activate(joinpath(@__DIR__, "sources", "MainEnv"))
+                TestEnv.activate()
+                new_project_toml_path = Base.active_project()
+                @test new_project_toml_path != orig_project_toml_path
+                @test orig_load_path == Base.LOAD_PATH
+                @eval using MainEnv
+                @test isdefined(@__MODULE__, :MainEnv)
+                @test MainEnv.bar() == 42
+            finally
+                Pkg.activate(orig_project_toml_path)
+            end
+        end
+    end
 end
