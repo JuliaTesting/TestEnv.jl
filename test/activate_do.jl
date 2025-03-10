@@ -16,7 +16,7 @@
             TestEnv.activate("ChainRulesCore") do
                 @eval using FiniteDifferences
             end
-            @test isdefined(@__MODULE__, :FiniteDifferences)
+            @test Base.invokelatest(isdefined, @__MODULE__, :FiniteDifferences)
 
             # We use endswith here because on MacOS GitHub runners for some reasons the paths are slightly different
             # We also skip on Julia 1.2 and 1.3 on Windows because it is using 8 character shortened paths in one case
@@ -44,7 +44,7 @@
                 TestEnv.activate("MCMCDiagnosticTools"; kw...) do
                     @eval using FFTW
                 end
-                @test isdefined(@__MODULE__, :FFTW)
+                @test Base.invokelatest(isdefined, @__MODULE__, :FFTW)
 
                 @test endswith(Base.active_project(), orig_project)
             elseif VERSION >= v"1.2-"
@@ -56,7 +56,7 @@
                 TestEnv.activate("ConstraintSolver") do
                     @eval using Combinatorics
                 end
-                @test isdefined(@__MODULE__, :Combinatorics)
+                @test Base.invokelatest(isdefined, @__MODULE__, :Combinatorics)
 
                 # We use endswith here because on MacOS GitHub runners for some reasons the paths are slightly different
                 # We also skip on Windows because it is using 8 character shortened paths in one case
