@@ -1,0 +1,12 @@
+name = "DependentEnv"
+uuid = "c9261501-a1a4-4a21-a37c-0c7025a0fef8"
+version = "0.0.0"
+
+[deps]
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
