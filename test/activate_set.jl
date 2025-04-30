@@ -14,10 +14,10 @@
                 @test orig_load_path == Base.LOAD_PATH
 
                 @eval using StaticArrays  # From ChainRulesCore [extras] Project.toml
-                @test isdefined(@__MODULE__, :StaticArrays)
+                @test Base.invokelatest(isdefined, @__MODULE__, :StaticArrays)
 
                 @eval using Compat  # from ChainRulesCore Project.toml
-                @test isdefined(@__MODULE__, :StaticArrays)
+                @test Base.invokelatest(isdefined, @__MODULE__, :Compat)
             finally
                 Pkg.activate(orig_project_toml_path)
                 # No longer is enviroment active
@@ -49,7 +49,7 @@
                     @test orig_load_path == Base.LOAD_PATH
 
                     @eval using CSV
-                    @test isdefined(@__MODULE__, :CSV)
+                    @test Base.invokelatest(isdefined, @__MODULE__, :CSV)
 
                 finally
                     Pkg.activate(orig_project_toml_path)
@@ -73,7 +73,7 @@
                     @test orig_load_path == Base.LOAD_PATH
 
                     @eval using JSON
-                    @test isdefined(@__MODULE__, :JSON)
+                    @test Base.invokelatest(isdefined, @__MODULE__, :JSON)
 
                 finally
                     Pkg.activate(orig_project_toml_path)
