@@ -54,6 +54,18 @@ function activate(pkg::AbstractString=current_pkg_name(); allow_reresolve=true)
     temp_ctx = Context()
     temp_ctx.env.project.deps[pkgspec.name] = pkgspec.uuid
 
+    # A hack to get [sources] with relative paths working. We just dive into the project
+    # context and replace all the relative '{path = ".."}' instances with the corresponding
+    # absolute paths. `pkgspec.path` is assumed to be relative to the Project.toml file
+    # that we are activating and has the relative paths.
+    for source in values(temp_ctx.env.project.sources)
+        isa(source, Dict) || continue
+        haskey(source, "path") || continue
+        if !isabspath(source["path"])
+            source["path"] = joinpath(pkgspec.path, source["path"])
+        end
+    end
+
     try
         Pkg.resolve(temp_ctx; io=devnull)
         @debug "Using _parent_ dep graph"

@@ -1,0 +1,16 @@
+name = "MainEnv"
+uuid = "1b324c26-e66a-4bf4-9aeb-d8ecf06e8e93"
+version = "0.0.0"
+
+[deps]
+DependentEnv = "c9261501-a1a4-4a21-a37c-0c7025a0fef8"
+TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+
+[sources]
+DependentEnv = {path = "../DependentEnv"}
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
