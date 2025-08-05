@@ -37,6 +37,7 @@ function activate(pkg::AbstractString=current_pkg_name(); allow_reresolve=true)
     for (name, uuid) in sandbox_env.project.deps
         entry = get(sandbox_manifest, uuid, nothing)
         if entry !== nothing && isfixed(entry)
+            # Signature changed when workspaces were introduced to Pkg in v1.12 (see Pkg.jl#3841)
             subgraph = Pkg.Operations.prune_manifest(sandbox_manifest, VERSION < v"1.12.0-" ? [uuid] : Set([uuid]))
             for (uuid, entry) in subgraph
                 if haskey(working_manifest, uuid)
