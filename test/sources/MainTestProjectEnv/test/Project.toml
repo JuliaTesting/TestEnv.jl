@@ -1,0 +1,8 @@
+[deps]
+MainEnv = "1b324c26-e66a-4bf4-9aeb-d8ecf06e8e93"
+MainTestProjectEnv = "e316c70a-63ba-4d10-8c0b-cec00dfd6f7f"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[sources]
+MainTestProjectEnv = {path = ".."}
+MainEnv = {path = "../../MainEnv"}

@@ -1,0 +1,9 @@
+name = "MainTestProjectEnv"
+uuid = "e316c70a-63ba-4d10-8c0b-cec00dfd6f7f"
+version = "0.0.0"
+
+[deps]
+DependentEnv = "c9261501-a1a4-4a21-a37c-0c7025a0fef8"
+
+[sources]
+DependentEnv = {path = "../DependentEnv"}
