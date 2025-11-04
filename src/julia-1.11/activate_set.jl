@@ -62,8 +62,9 @@ function activate(pkg::AbstractString=current_pkg_name(); allow_reresolve=true)
     for source in values(temp_ctx.env.project.sources)
         isa(source, Dict) || continue
         haskey(source, "path") || continue
+        base_path = test_dir_has_project_file(temp_ctx, pkgspec) ? joinpath(pkgspec.path, "test") : pkgspec.path
         if !isabspath(source["path"])
-            source["path"] = joinpath(pkgspec.path, source["path"])
+            source["path"] = joinpath(base_path, source["path"])
         end
     end
 
