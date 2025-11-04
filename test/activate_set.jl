@@ -105,5 +105,22 @@
                 Pkg.activate(orig_project_toml_path)
             end
         end
+        @testset "activate with [sources] and two Project.toml approach" begin
+            orig_project_toml_path = Base.active_project()
+            push!(LOAD_PATH, mktempdir())  # put something weird in LOAD_PATH for testing
+            orig_load_path = Base.LOAD_PATH
+            try
+                Pkg.activate(joinpath(@__DIR__, "sources", "MainTestProjectEnv"))
+                TestEnv.activate()
+                new_project_toml_path = Base.active_project()
+                @test new_project_toml_path != orig_project_toml_path
+                @test orig_load_path == Base.LOAD_PATH
+                @eval using MainTestProjectEnv
+                @test isdefined(@__MODULE__, :MainTestProjectEnv)
+                @test MainTestProjectEnv.bar() == 42
+            finally
+                Pkg.activate(orig_project_toml_path)
+            end
+        end
     end
 end
