@@ -30,19 +30,26 @@ jobs:
         os:
           - ubuntu-latest
           - windows-latest
-          - macOS-12
-        arch:
-          - x64
-          - x86
+          - macos-latest # Apple Silicon macOS
+          - macos-15-intel # Intel macOS
+        julia-wordsize:
+          - '32'
+          - '64'
         exclude:
-          - os: macOS-12
-            arch: x86
+          # macOS does not support 32-bit builds of Julia
+          - os: macos-latest
+            julia-wordsize: '32'
+          - os: macos-15-intel
+            julia-wordsize: '32'
     steps:
       - uses: actions/checkout@v3
       - uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.version }}
-          arch: ${{ matrix.arch }}
+          # If `julia-wordsize` is 32, then set the Julia arch to x76
+          # If `julia-wordsize` is 64, then set the Julia arch to ${{ runner.arch }}
+          # ${{ runner.arch }} automatically expands to the correct 64-bit value, either X64 or ARM64
+          arch: ${{ (matrix.julia-wordsize == '32') && 'x86' || runner.arch }}
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
