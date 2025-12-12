@@ -38,6 +38,8 @@ jobs:
           - windows-latest
           # macOS is handled separately, in the `include` section below
         julia-wordsize:
+          # The `julia-wordsize` variable only controls the word size of the Julia binaries that we use
+          # It doesn't affect the CPU architecture of the underlying GitHub Actions runner (virtual machine).
           - '32'
           - '64'
         include:
