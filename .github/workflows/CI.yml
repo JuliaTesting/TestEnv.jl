@@ -42,18 +42,18 @@ jobs:
           - os: macos-15-intel
             julia-wordsize: '32'
     steps:
-      - uses: actions/checkout@v3
-      - uses: julia-actions/setup-julia@v1
+      - uses: actions/checkout@v6
+      - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
           # If `julia-wordsize` is 32, then set the Julia arch to x76
           # If `julia-wordsize` is 64, then set the Julia arch to ${{ runner.arch }}
           # ${{ runner.arch }} automatically expands to the correct 64-bit value, either X64 or ARM64
           arch: ${{ (matrix.julia-wordsize == '32') && 'x86' || runner.arch }}
-      - uses: julia-actions/cache@v1
+      - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
       - uses: julia-actions/julia-processcoverage@v1
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v5
         with:
           file: lcov.info
