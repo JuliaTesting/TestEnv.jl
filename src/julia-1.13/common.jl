@@ -72,7 +72,7 @@ function get_test_dir(ctx::Context, pkgspec::Pkg.Types.PackageSpec)
         pkgspec.repo = entry.repo
         pkgspec.path = entry.path
         pkgspec.pinned = entry.pinned
-        pkgspec.path = project_rel_path(ctx.env, source_path(ctx.env.project_file, pkgspec)::String)
+        pkgspec.path = Pkg.safe_realpath(manifest_rel_path(ctx.env, source_path(ctx.env.project_file, pkgspec)::String))
     end
     pkgfilepath = source_path(ctx.env.project_file, pkgspec)::String
     return joinpath(pkgfilepath, "test")
