@@ -73,7 +73,7 @@ function activate(pkg::AbstractString=current_pkg_name(); allow_reresolve=true)
         @debug "Using _parent_ dep graph"
     catch err# TODO
         allow_reresolve || rethrow()
-        @debug err
+        @debug exception=err
         @warn "Could not use exact versions of packages in manifest, re-resolving"
         temp_ctx.env.manifest.deps = Dict(
             uuid => entry for
