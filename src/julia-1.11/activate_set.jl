@@ -40,7 +40,8 @@ function activate(pkg::AbstractString=current_pkg_name(); allow_reresolve=true)
             # Signature changed when workspaces were introduced to Pkg in v1.12 (see Pkg.jl#3841)
             subgraph = Pkg.Operations.prune_manifest(sandbox_manifest, VERSION < v"1.12.0-" ? [uuid] : Set([uuid]))
             for (uuid, entry) in subgraph
-                if haskey(working_manifest, uuid)
+                entry_working = get(working_manifest, uuid, nothing)
+                if entry_working !== nothing && entry_working != entry && (ctx.env.pkg !== nothing && ctx.env.pkg.uuid != uuid)
                     Pkg.Operations.pkgerror("can not merge projects")
                 end
                 working_manifest[uuid] = entry
