@@ -1,0 +1,6 @@
+name = "WorkspaceTestEnv"
+uuid = "f7f074d6-898f-4820-8a1f-11e53eb7425f"
+version = "0.0.0"
+
+[workspace]
+projects = ["test"]
