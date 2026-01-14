@@ -30,6 +30,7 @@ jobs:
           - '1.9'
           - '1.10' # current LTS
           - '1.11'
+          - '1.12.3'
           - '1.12'
           - '1.13-nightly' # TODO: Change this to '1.13' once Julia 1.13.0 has been released
           - 'nightly'
