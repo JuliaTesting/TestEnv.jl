@@ -14,10 +14,10 @@
                 @test orig_load_path == Base.LOAD_PATH
 
                 @eval using StaticArrays  # From ChainRulesCore [extras] Project.toml
-                @test isdefined(@__MODULE__, :StaticArrays)
+                @test Base.invokelatest(isdefined, @__MODULE__, :StaticArrays)
 
                 @eval using Compat  # from ChainRulesCore Project.toml
-                @test isdefined(@__MODULE__, :StaticArrays)
+                @test Base.invokelatest(isdefined, @__MODULE__, :Compat)
             finally
                 Pkg.activate(orig_project_toml_path)
                 # No longer is enviroment active
@@ -49,7 +49,7 @@
                     @test orig_load_path == Base.LOAD_PATH
 
                     @eval using CSV
-                    @test isdefined(@__MODULE__, :CSV)
+                    @test Base.invokelatest(isdefined, @__MODULE__, :CSV)
 
                 finally
                     Pkg.activate(orig_project_toml_path)
@@ -73,7 +73,7 @@
                     @test orig_load_path == Base.LOAD_PATH
 
                     @eval using JSON
-                    @test isdefined(@__MODULE__, :JSON)
+                    @test Base.invokelatest(isdefined, @__MODULE__, :JSON)
 
                 finally
                     Pkg.activate(orig_project_toml_path)
@@ -84,6 +84,63 @@
         if VERSION >= v"1.4-"
             # https://github.com/JuliaTesting/TestEnv.jl/issues/26
             @test isdefined(TestEnv, :isfixed)
+        end
+    end
+
+    if VERSION >= v"1.11"
+        @testset "activate with [sources]" begin
+            orig_project_toml_path = Base.active_project()
+            push!(LOAD_PATH, mktempdir())  # put something weird in LOAD_PATH for testing
+            orig_load_path = Base.LOAD_PATH
+            try
+                Pkg.activate(joinpath(@__DIR__, "sources", "MainEnv"))
+                TestEnv.activate()
+                new_project_toml_path = Base.active_project()
+                @test new_project_toml_path != orig_project_toml_path
+                @test orig_load_path == Base.LOAD_PATH
+                @eval using MainEnv
+                @test isdefined(@__MODULE__, :MainEnv)
+                @test MainEnv.bar() == 42
+            finally
+                Pkg.activate(orig_project_toml_path)
+            end
+        end
+        @testset "activate with [sources] and two Project.toml approach" begin
+            orig_project_toml_path = Base.active_project()
+            push!(LOAD_PATH, mktempdir())  # put something weird in LOAD_PATH for testing
+            orig_load_path = Base.LOAD_PATH
+            try
+                Pkg.activate(joinpath(@__DIR__, "sources", "MainTestProjectEnv"))
+                TestEnv.activate()
+                new_project_toml_path = Base.active_project()
+                @test new_project_toml_path != orig_project_toml_path
+                @test orig_load_path == Base.LOAD_PATH
+                @eval using MainTestProjectEnv
+                @test isdefined(@__MODULE__, :MainTestProjectEnv)
+                @test MainTestProjectEnv.bar() == 42
+            finally
+                Pkg.activate(orig_project_toml_path)
+            end
+        end
+    end
+
+    if VERSION >= v"1.12-"
+        @testset "activate [workspace] test env" begin
+            orig_project_toml_path = Base.active_project()
+            push!(LOAD_PATH, mktempdir())  # put something weird in LOAD_PATH for testing
+            orig_load_path = Base.LOAD_PATH
+            try
+                Pkg.activate(joinpath(@__DIR__, "sources", "WorkspaceTestEnv"))
+                TestEnv.activate()
+                new_project_toml_path = Base.active_project()
+                @test new_project_toml_path != orig_project_toml_path
+                @test orig_load_path == Base.LOAD_PATH
+                @eval using WorkspaceTestEnv
+                @test isdefined(@__MODULE__, :WorkspaceTestEnv)
+                @test WorkspaceTestEnv.foo() == 42
+            finally
+                Pkg.activate(orig_project_toml_path)
+            end
         end
     end
 end

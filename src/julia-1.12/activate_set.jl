@@ -74,7 +74,7 @@ function activate(pkg::AbstractString=current_pkg_name(); allow_reresolve=true)
         @debug "Using _parent_ dep graph"
     catch err# TODO
         allow_reresolve || rethrow()
-        @debug err
+        @debug exception=err
         @warn "Could not use exact versions of packages in manifest, re-resolving"
         temp_ctx.env.manifest.deps = Dict(
             uuid => entry for
@@ -83,11 +83,6 @@ function activate(pkg::AbstractString=current_pkg_name(); allow_reresolve=true)
         Pkg.resolve(temp_ctx; io=devnull)
         @debug "Using _clean_ dep graph"
     end
-
-    # Now that we have set up the sandbox environment, precompile all its packages:
-    # (Reconnect the `io` back to the original context so the caller can see the
-    # precompilation progress.)
-    Pkg.precompile(temp_ctx; io=ctx.io)
 
     write_env(temp_ctx.env; update_undo=false)
 
