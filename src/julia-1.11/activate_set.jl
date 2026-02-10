@@ -84,11 +84,6 @@ function activate(pkg::AbstractString=current_pkg_name(); allow_reresolve=true)
         @debug "Using _clean_ dep graph"
     end
 
-    # Now that we have set up the sandbox environment, precompile all its packages:
-    # (Reconnect the `io` back to the original context so the caller can see the
-    # precompilation progress.)
-    Pkg.precompile(temp_ctx; io=ctx.io, already_instantiated=true)
-
     write_env(temp_ctx.env; update_undo=false)
 
     return Base.active_project()

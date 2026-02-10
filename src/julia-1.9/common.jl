@@ -22,7 +22,7 @@ function ctx_and_pkgspec(pkg::AbstractString)
     pkgspec = deepcopy(PackageSpec(pkg))
     ctx = Context()
     isinstalled!(ctx, pkgspec) || throw(TestEnvError("$pkg not installed 👻"))
-    Pkg.instantiate(ctx; allow_autoprecomp = false) # do precomp later within sandbox
+    Pkg.instantiate(ctx)
     return ctx, pkgspec
 end
 
