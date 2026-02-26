@@ -33,29 +33,21 @@ jobs:
           - '1.12.3'
           - '1.12'
           - '1.13-nightly' # TODO: Change this to '1.13' once Julia 1.13.0 has been released
+          # - '1.14-nightly' # TODO: Uncomment this line once Julia 1.14 has been feature-frozen and branched
           - 'nightly'
         os:
           - ubuntu-latest
-          - windows-latest
-          # macOS is handled separately, in the `include` section below
         julia-wordsize:
           # The `julia-wordsize` variable only controls the word size of the Julia binaries that we use
           # It doesn't affect the CPU architecture of the underlying GitHub Actions runner (virtual machine).
-          - '32'
           - '64'
         include:
-          # We are capped to a total of 5 concurrent macOS jobs across
-          # the entire JuliaTesting GitHub organization.
-          # Therefore, instead of testing every Julia version on macOS,
-          # we only test Julia LTS and Julia v1
-          - os: macos-latest # Apple Silicon macOS
-            version: 'lts'
-          - os: macos-15-intel # Intel macOS
-            version: 'lts'
-          - os: macos-latest # Apple Silicon macOS
+          # To reduce the number of CI jobs, we test Linux 64-bit against all Julia versions (see above),
+          # but for other platforms:
+          # Linux 32-bit: Only test against Julia v1
+          - os: ubuntu-latest
             version: '1'
-          - os: macos-15-intel # Intel macOS
-            version: '1'
+            julia-wordsize: '32'
     steps:
       - uses: actions/checkout@v6
       - uses: julia-actions/setup-julia@v2
