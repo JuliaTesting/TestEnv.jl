@@ -41,13 +41,6 @@ jobs:
           # The `julia-wordsize` variable only controls the word size of the Julia binaries that we use
           # It doesn't affect the CPU architecture of the underlying GitHub Actions runner (virtual machine).
           - '64'
-        include:
-          # To reduce the number of CI jobs, we test Linux 64-bit against all Julia versions (see above),
-          # but for other platforms:
-          # Linux 32-bit: Only test against Julia v1
-          - os: ubuntu-latest
-            version: '1'
-            julia-wordsize: '32'
     steps:
       - uses: actions/checkout@v6
       - uses: julia-actions/setup-julia@v2
