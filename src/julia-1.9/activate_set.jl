@@ -72,7 +72,13 @@ function activate(pkg::AbstractString=current_pkg_name(); allow_reresolve=true)
     # Now that we have set up the sandbox environment, precompile all its packages:
     # (Reconnect the `io` back to the original context so the caller can see the
     # precompilation progress.)
-    Pkg._auto_precompile(temp_ctx; already_instantiated=true)
+    tmp_io = temp_ctx.io
+    try
+        temp_ctx.io = ctx.io
+        Pkg._auto_precompile(temp_ctx; already_instantiated=true)
+    finally
+        temp_ctx.io = tmp_io
+    end
 
     write_env(temp_ctx.env; update_undo=false)
 
