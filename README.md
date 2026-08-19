@@ -54,5 +54,11 @@ TestEnv.activate("Example") do
 end
 ```
 
+## Preferences
+
+On Julia 1.8 and later, preferences are copied into the test environment the same way `Pkg.test` does it: they are taken from `test/LocalPreferences.toml` (or the `[preferences]` section of `test/Project.toml`) if the package has its own test project, and from the package's own project otherwise, with the surrounding `LOAD_PATH` merged in behind them.
+
+On Julia 1.7 and earlier this is not supported -- `Base` there only exposes preferences per-package-UUID, so there is no way to collect the whole set to copy across.
+
 ### See also:
  - [Discourse Release Announcement](https://discourse.julialang.org/t/ann-testenv-jl-activate-your-test-enviroment-so-you-can-use-your-test-dependencies/65739)
