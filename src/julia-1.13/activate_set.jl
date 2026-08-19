@@ -13,10 +13,12 @@ function activate(pkg::AbstractString=current_pkg_name(); allow_reresolve=true)
 
     sandbox_path = joinpath(pkgspec.path::String, "test")
     sandbox_project = projectfile_path(sandbox_path)
+    preferences = sandbox_preferences(pkgspec.path::String)
 
     tmp = mktempdir()
     tmp_project = projectfile_path(tmp)
     tmp_manifest = manifestfile_path(tmp)
+    tmp_preferences = joinpath(tmp, first(Base.preferences_names))
 
     # Copy env info over to temp env
     if sandbox_project_override !== nothing
@@ -50,6 +52,14 @@ function activate(pkg::AbstractString=current_pkg_name(); allow_reresolve=true)
     end
 
     Types.write_manifest(working_manifest, tmp_manifest)
+
+    # Copy the preferences over too, as `Pkg.test` does. We reach for `Pkg.TOML` rather
+    # than the `TOML` stdlib because TestEnv supports Julia 1.0, which predates it.
+    if !isempty(preferences)
+        open(tmp_preferences, "w") do io
+            Pkg.TOML.print(io, preferences)
+        end
+    end
 
     Base.ACTIVE_PROJECT[] = tmp_project
 

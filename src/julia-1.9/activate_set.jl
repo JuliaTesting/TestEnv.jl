@@ -11,19 +11,9 @@ function activate(pkg::AbstractString=current_pkg_name(); allow_reresolve=true)
     # This needs to be first as `gen_target_project` fixes `pkgspec.path` if it is nothing
     sandbox_project_override = maybe_gen_project_override!(ctx, pkgspec)
 
-    source_path = pkgspec.path::String
-    sandbox_path = joinpath(source_path, "test")
+    sandbox_path = joinpath(pkgspec.path::String, "test")
     sandbox_project = projectfile_path(sandbox_path)
-    sandbox_preferences = nothing
-    if isfile(sandbox_project)
-        with_load_path([sandbox_path, Base.LOAD_PATH...]) do
-            sandbox_preferences = Base.get_preferences()
-        end
-    else
-        with_load_path([something(projectfile_path(source_path)), Base.LOAD_PATH...]) do
-            sandbox_preferences = Base.get_preferences()
-        end
-    end
+    preferences = sandbox_preferences(pkgspec.path::String)
 
     tmp = mktempdir()
     tmp_project = projectfile_path(tmp)
@@ -60,11 +50,12 @@ function activate(pkg::AbstractString=current_pkg_name(); allow_reresolve=true)
     end
 
     Types.write_manifest(working_manifest, tmp_manifest)
-    # Copy over preferences
-    if sandbox_preferences !== nothing
+
+    # Copy the preferences over too, as `Pkg.test` does. We reach for `Pkg.TOML` rather
+    # than the `TOML` stdlib because TestEnv supports Julia 1.0, which predates it.
+    if !isempty(preferences)
         open(tmp_preferences, "w") do io
-            # TODO: should we separately import TOML?
-            Pkg.TOML.print(io, sandbox_preferences::Dict{String, Any})
+            Pkg.TOML.print(io, preferences)
         end
     end
 
@@ -102,15 +93,4 @@ function activate(pkg::AbstractString=current_pkg_name(); allow_reresolve=true)
     write_env(temp_ctx.env; update_undo=false)
 
     return Base.active_project()
-end
-
-with_load_path(f::Function, new_load_path::String) = with_load_path(f, [new_load_path])
-function with_load_path(f::Function, new_load_path::Vector{String})
-    old_load_path = copy(Base.LOAD_PATH)
-    copy!(Base.LOAD_PATH, new_load_path)
-    try
-        f()
-    finally
-        copy!(LOAD_PATH, old_load_path)
-    end
 end
