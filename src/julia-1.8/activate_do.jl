@@ -14,7 +14,11 @@ function activate(f, pkg::AbstractString=current_pkg_name(); allow_reresolve=tru
 
     test_project_override = maybe_gen_project_override!(ctx, pkgspec)
     path = pkgspec.path::String
-    return sandbox(ctx, pkgspec, path, joinpath(path, "test"), test_project_override; allow_reresolve) do
+    preferences = sandbox_preferences(path)
+    return sandbox(
+        ctx, pkgspec, path, joinpath(path, "test"), test_project_override;
+        preferences, allow_reresolve,
+    ) do
         flush(stdout)
         f()
     end
