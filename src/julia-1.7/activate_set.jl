@@ -39,7 +39,8 @@ function activate(pkg::AbstractString=current_pkg_name())
         if entry !== nothing && isfixed(entry)
             subgraph = Pkg.Operations.prune_manifest(sandbox_manifest, [uuid])
             for (uuid, entry) in subgraph
-                if haskey(working_manifest, uuid)
+                entry_working = get(working_manifest, uuid, nothing)
+                if entry_working !== nothing && entry_working != entry && (ctx.env.pkg !== nothing && ctx.env.pkg.uuid != uuid)
                     Pkg.Operations.pkgerror("can not merge projects")
                 end
                 working_manifest[uuid] = entry

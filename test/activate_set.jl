@@ -90,6 +90,48 @@
         end
     end
 
+    if VERSION >= v"1.4-"
+        # https://github.com/JuliaTesting/TestEnv.jl/pull/120
+        # A package whose `test/Manifest.toml` dev's the package itself, i.e. what
+        # `julia --project=test -e 'using Pkg; Pkg.develop(path=".")'` produces.
+        @testset "activate package dev'ed in its own test/Manifest" begin
+            mktempdir() do p
+                pkg_path = joinpath(p, "SelfDevTestManifest")
+                cp(joinpath(@__DIR__, "sources", "SelfDevTestManifest"), pkg_path)
+
+                orig_project_toml_path = Base.active_project()
+                orig_load_path = copy(LOAD_PATH)
+                push!(LOAD_PATH, mktempdir())  # put something weird in LOAD_PATH for testing
+                try
+                    # Both manifests are generated here rather than checked in with the
+                    # fixture, so that the manifest format always matches the running Julia
+                    # version and this test works on all of them. The `sources/*` fixtures
+                    # that do ship a Manifest.toml are only usable by the
+                    # `VERSION >= v"1.11"` testsets below; this one has to work back to 1.4.
+                    # First the test/Manifest.toml that dev's the package itself...
+                    Pkg.activate(joinpath(pkg_path, "test"))
+                    Pkg.develop(PackageSpec(path=pkg_path))
+
+                    # ... and the package's own manifest
+                    Pkg.activate(pkg_path)
+                    Pkg.resolve()
+
+                    TestEnv.activate()
+                    new_project_toml_path = Base.active_project()
+                    @test new_project_toml_path != orig_project_toml_path
+
+                    @eval using SelfDevTestManifest
+                    @test Base.invokelatest(isdefined, @__MODULE__, :SelfDevTestManifest)
+                    @test (@eval SelfDevTestManifest.foo()) == 42
+                finally
+                    Pkg.activate(orig_project_toml_path)
+                    pop!(LOAD_PATH)
+                    @test orig_load_path == LOAD_PATH
+                end
+            end
+        end
+    end
+
     if VERSION >= v"1.11"
         @testset "activate with [sources]" begin
             orig_project_toml_path = Base.active_project()
