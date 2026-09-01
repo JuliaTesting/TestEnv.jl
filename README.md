@@ -9,7 +9,7 @@ It lets you activate the test environment from a given package.
 
 ### Why is this useful?
 
-This lets you run code in the test enviroment, interactively; giving you access to all your test-only dependencies.
+This lets you run code in the test environment, interactively; giving you access to all your test-only dependencies.
 When you run `]test` in the REPL, a new Julia process is started which activates a temporary environment containing the tested package together with all its test-only dependencies.
 These can be either defined in the `[extras]` section in the package's `Project.toml` or in a separate `test/Project.toml`.
 The special temporary environment is different than the plain package environment (which doesn't contain the extra test dependencies) or the `test/Project.toml` environment (which doesn't contain the package itself, and may not exist).
@@ -19,8 +19,8 @@ Julia does not offer an official mechanism to activate such an environment outsi
 That's what `TestEnv.activate()` is for.
 
 ## Note on installation:
-Like other developer focused tools, TestEnv.jl should not be added as a dependency of the package you are developing, but rather added to your global enviroment, so it is always available.
-The easiest way to install it to the global enviroment is to start julia (without passing the `--project` argument), and then run `] add TestEnv`.
+Like other developer focused tools, TestEnv.jl should not be added as a dependency of the package you are developing, but rather added to your global environment, so it is always available.
+The easiest way to install it to the global environment is to start julia (without passing the `--project` argument), and then run `] add TestEnv`.
 
 
 ## Example
@@ -55,4 +55,4 @@ end
 ```
 
 ### See also:
- - [Discourse Release Announcement](https://discourse.julialang.org/t/ann-testenv-jl-activate-your-test-enviroment-so-you-can-use-your-test-dependencies/65739)
+ - [Discourse Release Announcement](https://discourse.julialang.org/t/ann-testenv-jl-activate-your-test-environment-so-you-can-use-your-test-dependencies/65739)

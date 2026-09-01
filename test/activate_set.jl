@@ -19,7 +19,7 @@
                 @test Base.invokelatest(isdefined, @__MODULE__, :Compat)
             finally
                 Pkg.activate(orig_project_toml_path)
-                # No longer is enviroment active
+                # No longer is environment active
                 @test_throws ArgumentError @eval using OffsetArrays
                 pop!(LOAD_PATH)
                 @test orig_load_path == LOAD_PATH

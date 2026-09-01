@@ -1,7 +1,7 @@
 """
     TestEnv.activate([pkg])
 
-Activate the test enviroment of `pkg` (defaults to current enviroment).
+Activate the test environment of `pkg` (defaults to current environment).
 """
 function activate(pkg::AbstractString=current_pkg_name())
     ctx, pkgspec = ctx_and_pkgspec(pkg)

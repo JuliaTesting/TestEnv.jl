@@ -1,9 +1,9 @@
 """
     TestEnv.activate(f, [pkg]; allow_reresolve=true)
 
-Activate the test enviroment of `pkg` (defaults to current enviroment), and run `f()`,
-then deactivate the enviroment.
-This is not useful for many people: Julia is not really designed to have the enviroment
+Activate the test environment of `pkg` (defaults to current environment), and run `f()`,
+then deactivate the environment.
+This is not useful for many people: Julia is not really designed to have the environment
 being changed while you are executing code.
 However, this *is* useful for anyone doing something like making a alternative to
 `Pkg.test()`.

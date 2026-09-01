@@ -4,7 +4,7 @@
 """
     TestEnv.activate([pkg]; allow_reresolve=true)
 
-Activate the test enviroment of `pkg` (defaults to current enviroment).
+Activate the test environment of `pkg` (defaults to current environment).
 """
 function activate(pkg::AbstractString=current_pkg_name(); allow_reresolve=true)
     ctx, pkgspec = ctx_and_pkgspec(pkg)
