@@ -86,3 +86,34 @@ function maybe_gen_project_override!(ctx, pkgspec)
         nothing
     end
 end
+
+
+"""
+    sandbox_preferences(source_path::AbstractString)
+
+The preferences that apply inside the test environment of the package rooted at
+`source_path`, computed the same way `Pkg.test` does it (see `Pkg.Operations.test`):
+they come from the `test/` environment when it has its own project file, and from the
+package's own project otherwise, with the rest of the current `LOAD_PATH` merged in
+behind them.
+"""
+function sandbox_preferences(source_path::AbstractString)
+    test_path = joinpath(source_path, "test")
+    env = isfile(projectfile_path(test_path)) ? test_path :
+        something(projectfile_path(source_path))
+    preferences = nothing
+    with_load_path([env, Base.LOAD_PATH...]) do
+        preferences = Base.get_preferences()
+    end
+    return preferences::Dict{String,Any}
+end
+
+function with_load_path(f::Function, new_load_path::Vector{String})
+    old_load_path = copy(Base.LOAD_PATH)
+    copy!(Base.LOAD_PATH, new_load_path)
+    try
+        f()
+    finally
+        copy!(Base.LOAD_PATH, old_load_path)
+    end
+end

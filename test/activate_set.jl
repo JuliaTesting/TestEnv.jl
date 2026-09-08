@@ -228,14 +228,12 @@
                             Pkg.activate(orig_project_toml_path)
                         end
                     finally
-                        if isdefined(@__MODULE__, :orig_load_path)
-                            pop!(LOAD_PATH)
-                            append!(LOAD_PATH, orig_load_path)
-                        end
-                        if isdefined(@__MODULE__, :orig_depot_path)
-                            pop!(DEPOT_PATH)
-                            append!(DEPOT_PATH, orig_depot_path)
-                        end
+                        # NB: these must be restored unconditionally. The previous
+                        # `isdefined(@__MODULE__, :orig_load_path)` guards were never true --
+                        # these are locals, not module globals -- so `LOAD_PATH` and
+                        # `DEPOT_PATH` leaked into every later testset.
+                        copy!(LOAD_PATH, orig_load_path)
+                        copy!(DEPOT_PATH, orig_depot_path)
                     end
                 end
             end

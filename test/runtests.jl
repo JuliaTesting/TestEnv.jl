@@ -6,4 +6,5 @@ using Test
     include("activate_do.jl")
     include("activate_set.jl")
     include("common.jl")
+    include("preferences.jl")
 end

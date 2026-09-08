@@ -1,0 +1,9 @@
+name = "PrefsNone"
+uuid = "8ec4a1e1-5c93-4b52-96f2-0c5f0f4e2d3b"
+version = "0.0.0"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

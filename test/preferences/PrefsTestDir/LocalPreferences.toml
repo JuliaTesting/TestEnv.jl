@@ -1,0 +1,3 @@
+[PrefsTestDir]
+setting = "top-level"
+only_at_top_level = "yes"
