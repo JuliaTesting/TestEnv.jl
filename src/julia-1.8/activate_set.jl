@@ -18,6 +18,8 @@ function activate(pkg::AbstractString=current_pkg_name(); allow_reresolve=true)
     tmp = mktempdir()
     tmp_project = projectfile_path(tmp)
     tmp_manifest = manifestfile_path(tmp)
+    # `Base.collect_preferences` stops at the first of `Base.preferences_names` that exists,
+    # so writing that one is what `Pkg.Operations.sandbox` does too.
     tmp_preferences = joinpath(tmp, first(Base.preferences_names))
 
     # Copy env info over to temp env
@@ -52,8 +54,9 @@ function activate(pkg::AbstractString=current_pkg_name(); allow_reresolve=true)
 
     Types.write_manifest(working_manifest, tmp_manifest)
 
-    # Copy the preferences over too, as `Pkg.test` does. We reach for `Pkg.TOML` rather
-    # than the `TOML` stdlib because TestEnv supports Julia 1.0, which predates it.
+    # Copy the preferences over too, as `Pkg.test` does. `Pkg.TOML` rather than the `TOML`
+    # stdlib: TestEnv's single Project.toml is shared by every supported Julia version back
+    # to 1.0, and `TOML` only became a stdlib in 1.6, so it cannot be listed as a dep.
     if !isempty(preferences)
         open(tmp_preferences, "w") do io
             Pkg.TOML.print(io, preferences)
